@@ -14,7 +14,7 @@
 
 <img src="assets/demo.svg" alt="knock indexing Flask and answering a question with file:line references" width="100%">
 
-<sub>Real output on <a href="https://github.com/pallets/flask">Flask</a> 3.1.2, trimmed to fit.</sub>
+<sub>What happens under the hood, shown on <a href="https://github.com/pallets/flask">Flask</a> 3.1.2 (real output, trimmed). Day to day, your agent runs this for you; see <a href="#-getting-started">Getting started</a>.</sub>
 
 </div>
 
@@ -34,29 +34,83 @@ Every new chat with a coding agent starts with amnesia. To answer *"where is X?"
 
 <sub>Median characters per task on the <a href="docs/benchmark.md">held-out benchmark</a> (targeted-grep and grep-and-read baselines vs knock). Fewer characters ≠ an identical cut in your bill; see the <a href="#-faq">FAQ</a>.</sub>
 
-## ⚡ Try it in 60 seconds
+## ⚡ Getting started
+
+**You set knock up once, then you just keep using your AI agent as usual.** The agent talks to knock in the background; you never have to run knock commands day to day.
+
+### 1️⃣ Install knock (once)
 
 ```bash
-# 1. install
 git clone https://github.com/HasanGilani/knock.git && cd knock
 python3 -m venv .venv && source .venv/bin/activate && pip install -e .
-
-# 2. index any git repo (first run indexes everything; later runs only touch what changed)
-knock index ~/code/my-project
-
-# 3. ask it something
-cd ~/code/my-project
-knock context "add rate limiting to the login endpoint"
 ```
 
-Then plug it into your agent. For **Claude Code**, run this from your project:
+### 2️⃣ Connect it to your agent (once per project)
+
+From inside the project you work on, for **Claude Code** (in the same terminal as step 1, so `which knock` finds it):
 
 ```bash
+cd ~/code/my-project
 claude mcp add knock -- "$(which knock)" serve --repo .
 ```
 
+That's the whole setup. The next time you open Claude Code in that project, knock reads the project and builds its notes automatically. This takes a few seconds the first time; after that it only re-reads files that changed.
+
 > [!TIP]
-> Add one line to your project's `CLAUDE.md`: *"Call knock's `get_context` before exploring the repo, and save reusable findings with `record_knowledge`."*
+> Add this line to your project's `CLAUDE.md` so the agent checks knock first:
+> *"Before exploring the repo, call knock's `get_context`. Save reusable findings with `record_knowledge`."*
+
+### 3️⃣ Work normally
+
+Ask your agent what you'd always ask. Here's what changes behind the scenes:
+
+| You type | What the agent does |
+|---|---|
+| *"Add rate limiting to the login endpoint"* | asks knock first and gets the login handler's `file:line`, your middleware conventions and the test setup, then opens only those lines |
+| *"Why do we use Postgres instead of Mongo?"* | gets the decision and its reasoning from your docs or ADRs, with a link to the source |
+| *"Tests fail with a Redis error, any idea?"* | finds the finding a previous session saved: *"login tests need Redis running"* |
+| *(after it figures something out)* | saves it with `record_knowledge`, so tomorrow's session already knows |
+
+Nothing to maintain: when code changes, knock updates its notes, and flags anything that may be outdated.
+
+<details>
+<summary><b>🖥️ Optional: use knock yourself from the terminal</b></summary>
+
+<br>
+
+You never *need* these, but they're handy. They're also what the demo at the top shows.
+
+| Command | When you'd use it |
+|---|---|
+| `knock context "how do we deploy?"` | ask a question yourself, e.g. when onboarding onto an unfamiliar repo |
+| `knock search "rate limit"` | look up what knock knows about a topic |
+| `knock status` | check how fresh the notes are and how much knock knows |
+| `knock index .` | update the notes right now; your agent normally does this for you |
+| `knock index . --full` | rebuild everything from scratch after a huge refactor |
+| `knock forget . --yes` | delete everything knock stored about this project |
+
+Want knock to ignore some files? List them in a `.knockignore` file (same format as `.gitignore`).
+
+</details>
+
+<details>
+<summary><b>👥 Setting it up for a whole team</b></summary>
+
+<br>
+
+Commit a `.mcp.json` file to your repo, and every teammate's Claude Code picks up knock automatically (each person needs knock installed):
+
+```json
+{
+  "mcpServers": {
+    "knock": { "command": "knock", "args": ["serve", "--repo", "."] }
+  }
+}
+```
+
+Each person's notes live on their own machine. Sharing findings across a team isn't supported yet (see Status below).
+
+</details>
 
 ## 🧠 How it works
 
