@@ -1,148 +1,213 @@
-# knock
+<div align="center">
 
-**Persistent, source-grounded repository knowledge for AI coding agents, served over MCP.**
+# 🚪 knock
 
-Coding agents spend much of their budget re-discovering the same things in every session: how the system is put together, where a feature lives, how to run the tests, why a decision was made, what was already tried when debugging. knock keeps that knowledge in a local, structured store and serves it to agents through the [Model Context Protocol](https://modelcontextprotocol.io), so an agent can ask one bounded question instead of grepping and reading dozens of files.
+### Give your AI coding agent a memory of your codebase.
 
-- **Local-first.** One SQLite file under `~/.knock`. No network calls, no telemetry, no external services, no paid model required.
-- **Source-grounded.** Every knowledge item records which file (and lines) it came from, that file's content hash, and the Git revision. Original files remain the source of truth; `get_source` returns the current text when an agent needs to verify.
-- **Kept honest.** Incremental re-indexing updates or invalidates knowledge whose sources changed. Agent-recorded findings are marked *stale* when a file they cite changes. Responses always state freshness.
-- **Deterministic extraction.** Knowledge comes from parsing code (Python `ast`, line patterns for 25+ other languages), Markdown/reStructuredText docs, ADRs, manifests (npm, pyproject, go.mod, Cargo, …), CI workflows, Dockerfiles, Makefiles, linter configs and Git history. Agents add what they learn with `record_knowledge`.
+*Stop paying your agent to re-read the same files every session. Knock first, then read only what matters.*
 
-knock is not a chatbot, an IDE, or a vector-database wrapper. It's an MVP: see [Limitations](#limitations).
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+![MCP server](https://img.shields.io/badge/MCP-server-8A2BE2)
+![100% local](https://img.shields.io/badge/runs-100%25%20local-2ea44f)
+![No API key needed](https://img.shields.io/badge/API%20key-not%20needed-2ea44f)
 
-## Quick start
+<img src="assets/demo.svg" alt="knock indexing Flask and answering a question with file:line references" width="100%">
 
-Requires Python 3.10+ and Git.
+<sub>Real output on <a href="https://github.com/pallets/flask">Flask</a> 3.1.2, trimmed to fit.</sub>
 
-```bash
-git clone <this repository> knock && cd knock
-python3 -m venv .venv && .venv/bin/pip install -e .
-```
+</div>
 
-Index a repository. The first run indexes everything; later runs only touch changed files:
+---
 
-```bash
-.venv/bin/knock index /path/to/your/repo
-```
+## 🤔 The problem, in one table
 
-Ask it something:
+Every new chat with a coding agent starts with amnesia. To answer *"where is X?"* or *"how do we deploy?"* it greps, opens big files, reads them... and next session it does it **all over again**.
 
-```bash
-cd /path/to/your/repo
-knock context "add rate limiting to the login endpoint"
-knock search "how do we deploy" --category workflow
-knock source src/app/auth.py --symbol login
-knock status
-```
-
-## Connect an agent
-
-knock runs as a stdio MCP server scoped to the repositories you name:
-
-```bash
-knock serve --repo /path/to/your/repo
-```
-
-**Claude Code** (from inside the repository):
-
-```bash
-claude mcp add knock -- /absolute/path/to/knock/.venv/bin/knock serve --repo .
-```
-
-To share the setup with a team, put a project-scoped `.mcp.json` at the repository root instead:
-
-```json
-{
-  "mcpServers": {
-    "knock": { "command": "knock", "args": ["serve", "--repo", "."] }
-  }
-}
-```
-
-Any MCP client that can launch a stdio server can use the same command. **Tested so far:** the official MCP Python SDK client, both in-process and over a real stdio subprocess (`tests/test_mcp.py`). In Claude Code 2.1.267, the server connects and all 8 tools are discovered; a model actually calling them has not been verified yet. Cursor and other agents are untested. See [docs/agents.md](docs/agents.md) for the tool reference and other client configurations.
-
-### Tools
-
-| Tool | Kind | Purpose |
+| | 😩 Without knock | 😎 With knock |
 |---|---|---|
-| `get_context` | read | Ranked, budgeted package for a task: knowledge, symbols (`file:line`), files worth opening, related commits, explicit gaps |
-| `search_knowledge` | read | Full-text search with category/path filters |
-| `get_knowledge` | read | One item with full provenance, links and optional source excerpts |
-| `get_source` | read | Current text of an **indexed** file by lines or symbol (secrets redacted) |
-| `get_repository_status` | read | Freshness, counts, recent index runs, cache and usage counters |
-| `record_knowledge` | write | Store a finding with cited sources; deduplicated, conflicts reported |
-| `update_knowledge_status` | write | Verify or invalidate an item after checking it |
-| `refresh_repository` | write | Incremental re-index (deterministic, local, no model calls) |
+| **First move** | `grep` around, open 3 whole files | one `get_context` call |
+| **Text the agent reads** | ~27,000–118,000 characters per question | ~7,600 characters per question |
+| **Finds "why did we do it this way?"** | only if it opens the right doc | decisions and their rationale come back with the answer |
+| **Remembers yesterday's bug hunt** | ❌ | ✅ agents save findings with `record_knowledge` |
+| **Knows when its notes are outdated** | — | ✅ every answer says `fresh` or `stale` |
 
-## Example workflow
+<sub>Median characters per task on the <a href="docs/benchmark.md">held-out benchmark</a> (targeted-grep and grep-and-read baselines vs knock). Fewer characters ≠ an identical cut in your bill; see the <a href="#-faq">FAQ</a>.</sub>
 
-This is real output from knock run against Flask 3.1.2. An agent is told: *"sessions signed with an old key in SECRET_KEY_FALLBACKS are rejected after rotating SECRET_KEY"*.
+## ⚡ Try it in 60 seconds
 
-1. **`get_context(task)`** returns about 7.7 KB (measured). It includes the session and secret-key documentation sections and the symbol `SecureCookieSessionInterface.get_signing_serializer` at `src/flask/sessions.py:317`. It also includes the test `test_session_secret_key_fallbacks` (`tests/test_basic.py:374`) and the related commits `fb54159861 secret key rotation: fix key list ordering` and `e13373f838 enable secret key rotation`. Freshness is `fresh`. It also states a gap: no stored knowledge mentions `SECRET_KEY_FALLBACKS` directly. No repository scan happens, and no model is called.
-2. **`get_source("src/flask/sessions.py", symbol="get_signing_serializer")`** returns about 80 lines of the authoritative implementation, instead of whole files.
-3. Having confirmed the behaviour, the agent records it so later sessions skip steps 1–2:
+```bash
+# 1. install
+git clone https://github.com/HasanGilani/knock.git && cd knock
+python3 -m venv .venv && source .venv/bin/activate && pip install -e .
+
+# 2. index any git repo (first run indexes everything; later runs only touch what changed)
+knock index ~/code/my-project
+
+# 3. ask it something
+cd ~/code/my-project
+knock context "add rate limiting to the login endpoint"
+```
+
+Then plug it into your agent. For **Claude Code**, run this from your project:
+
+```bash
+claude mcp add knock -- "$(which knock)" serve --repo .
+```
+
+> [!TIP]
+> Add one line to your project's `CLAUDE.md`: *"Call knock's `get_context` before exploring the repo, and save reusable findings with `record_knowledge`."*
+
+## 🧠 How it works
+
+```mermaid
+flowchart LR
+    A["📁 Your repo<br/>code · docs · configs · git log"] -->|"knock index<br/>(only changed files)"| B["🗂️ Notes<br/>each one points to<br/>file + lines + hash"]
+    B --> C[("💾 SQLite<br/>on your machine")]
+    C -->|"get_context"| D["🤖 Your agent"]
+    D -->|"get_source<br/>(verify the real lines)"| A
+    D -->|"record_knowledge<br/>(save what it learned)"| C
+```
+
+1. **Index:** knock reads your repo *without running anything in it*. It writes short notes: what each module defines, what the docs say about setup and deployment, which tools and dependencies you use, why decisions were made, and which recent commits fixed bugs.
+2. **Ask:** your agent asks a question and gets a small, ranked answer with `file:line` pointers, instead of reading whole files.
+3. **Verify:** before editing, the agent reads just the lines it needs. The original files are always the source of truth.
+4. **Remember:** the agent saves what it learned. If those files change later, knock marks the note **stale** so nobody trusts outdated info.
+
+## 🧰 What your agent gets
+
+| Tool | | What it does |
+|---|---|---|
+| `get_context` | 🔎 | **Start here.** A ranked package for a task: notes, functions with `file:line`, files worth opening, related commits, and honest "nothing known about X" gaps |
+| `search_knowledge` | 📚 | Search notes, filtered by category (architecture, decision, workflow, …) or folder |
+| `get_knowledge` | 🧾 | One note with full provenance: where it came from, when, and whether it is still current |
+| `get_source` | 📄 | Read real lines from a file, with secrets redacted. Only files knock indexed |
+| `record_knowledge` | ✍️ | Save a finding; duplicates are merged, contradictions flagged |
+| `update_knowledge_status` | ✅ | Mark a note verified, or wrong |
+| `get_repository_status` | 🩺 | How fresh the index is, plus counts and stats |
+| `refresh_repository` | 🔄 | Re-index changed files (takes milliseconds, no AI calls) |
+
+<details>
+<summary><b>👀 See a real example session</b></summary>
+
+<br>
+
+On Flask, an agent is told: *"sessions signed with an old key in `SECRET_KEY_FALLBACKS` are rejected after rotating `SECRET_KEY`"*.
+
+1. **`get_context`** returns ~7.7 KB containing:
+   - `src/flask/sessions.py:317`: `SecureCookieSessionInterface.get_signing_serializer`
+   - `tests/test_basic.py:374`: `test_session_secret_key_fallbacks`
+   - related commits `fb54159861 secret key rotation: fix key list ordering` and `e13373f838 enable secret key rotation`
+   - the docs sections on sessions and secret keys
+2. **`get_source("src/flask/sessions.py", symbol="get_signing_serializer")`** returns the ~80 relevant lines, not the whole file.
+3. **`record_knowledge`** saves the finding:
    ```json
    {"category": "debugging",
-    "content": "SecureCookieSessionInterface.get_signing_serializer builds the signing key list as SECRET_KEY_FALLBACKS followed by SECRET_KEY (the order itsdangerous expects); the ordering was fixed in commit fb54159.",
+    "content": "get_signing_serializer builds the key list as SECRET_KEY_FALLBACKS followed by SECRET_KEY; ordering was fixed in fb54159.",
     "sources": [{"path": "src/flask/sessions.py", "start_line": 317, "end_line": 335}]}
    ```
-   If `sessions.py` changes later, this item is automatically marked *stale* and returned with a warning until it is re-verified.
+   The next session gets it instantly. If `sessions.py` changes, the note is flagged **stale**.
 
-## How it works (short)
+</details>
 
-```
-repository files ──► discovery (git ls-files, exclusions, secret rules)
-                      │  size+mtime → hash → unchanged? skip
-                      ▼
-                 extractors (deterministic) ──► knowledge items + symbols + evidence (path, lines, hash, revision)
-                      │                                   ▲
- git log ─────────────┘                                   │ record_knowledge (agents)
-                                                          ▼
-               SQLite (FTS5 + metadata) ──► ranking (relevance × authority × freshness × intent) ──► budgeted MCP responses
-```
+## 📊 Does it actually help?
 
-Details: [docs/architecture.md](docs/architecture.md) (data model, lifecycle, indexing, caching), [docs/security.md](docs/security.md) (privacy and threat model).
+Measured with a reproducible benchmark: 12 engineering tasks per repo, covering architecture, finding a feature, deployment, bug investigation, design rationale and following conventions.
 
-## Measured results
+**Held-out repo** ([full-stack-fastapi-template](https://github.com/fastapi/full-stack-fastapi-template); knock was never tuned on it):
 
-From the deterministic retrieval benchmark ([docs/benchmark.md](docs/benchmark.md)). This is a **retrieval proxy**: it measures whether the facts a task needs reached the agent, and how much text that took. It doesn't measure end-to-end agent success.
+| Approach | Found the needed facts | Characters read | Tool calls |
+|---|:---:|---:|---:|
+| 🐢 grep + read 3 files | 9 / 12 | 1,215,570 | 72 |
+| 🐇 targeted grep + read snippets | 7 / 12 | 328,206 | 60 |
+| 🚪 **knock** | **10 / 12** | **122,506** | **17** |
 
-**Held-out repository** (`fastapi/full-stack-fastapi-template` 0.9.0; tasks written before knock was run on it, and knock not changed afterwards):
+<details>
+<summary><b>More numbers, and the fine print</b></summary>
 
-| workflow | tasks with all facts found | characters consumed (measured) | tool calls |
-|---|---|---|---|
-| grep + read 3 files | 9/12 | 1,215,570 | 72 |
-| targeted grep + 2 read windows | 7/12 | 328,206 | 60 |
-| knock `get_context` (+ ≤2 `get_source`) | 10/12 | 122,506 | 17 |
+<br>
 
-On Flask 3.1.2, which was the **development** set (knock was tuned while looking at these results, so they're optimistic), knock found all facts for 12/12 tasks using 107,164 characters. The two simulated baselines found them for 7/12, using 2,141,848 and 246,604 characters.
+- **Flask** (used during development, so optimistic): knock 12/12 with 107K chars, baselines 7/12 with 2.1M and 247K chars.
+- **Speed:** a ~200-file repo indexes in 0.3–0.6 s; re-indexing with no changes takes ~30 ms.
+- **What this measures:** whether the facts *reached* the agent, not whether the agent then solved the task. The baselines are simulations of agent behaviour.
+- **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.
+- **Where knock missed:** wording mismatches ("linters" vs "lint") and module-level variables it doesn't index yet.
 
-Indexing those ~200-file repositories took 0.3–0.6 s cold. A no-op refresh took about 30 ms and reprocessed 0 files.
+Full methodology: [docs/benchmark.md](docs/benchmark.md).
 
-Fewer characters reaching the agent is not the same as a cost saving. Agent token usage also includes system prompts, reasoning, and provider-side prompt caching. `benchmarks/agent_bench.py` measures real API usage for both conditions, but it **has not been run** for this report: it needs API credentials and spends money.
+</details>
 
-## Limitations
+## 🔒 Your code stays yours
 
-- **Deterministic extraction is shallow.** It captures what is explicitly written (docs, manifests, configs, symbol names, leading docstrings). It doesn't understand behaviour or data flow across modules. Knowledge that exists only in people's heads appears only when agents record it.
-- **Lexical retrieval.** Ranking uses FTS5 with Porter stemming plus heuristics; there are no embeddings. Paraphrases that share no terms with the stored text can miss (for example "linters" vs `lint`, seen in the held-out benchmark).
-- **Module-level variables** other than UPPER_CASE constants are not indexed as symbols (for example `api_router = APIRouter()`), which caused a held-out benchmark miss.
-- **Freshness checks** compare `stat()` results and HEAD. New untracked files appear only after `refresh_repository`.
-- **Agent-recorded knowledge is unverified** until an agent or human verifies it. knock tracks staleness but can't tell whether a claim is true.
-- **Conflict detection is heuristic:** similar statements that differ in negation or in the numbers they contain. Many real contradictions won't be detected.
-- **Single machine.** There is no sync or sharing between developers yet; the database is per user.
-- **Agent coverage is partial:** tool calls are tested through the MCP SDK client. In Claude Code, connection and tool discovery are verified, but model-driven tool calls aren't yet. Other agents are untested.
+- 💻 **Everything is local:** one SQLite file in `~/.knock`. No cloud, no telemetry, no network calls (a test enforces this).
+- 🙈 **Secrets are skipped:** `.env` files, keys and credentials are never indexed, and tokens or passwords inside code are redacted.
+- 🧱 **Nothing is executed:** knock never runs your scripts, hooks or tests. It only reads.
+- 🚧 **Sandboxed reads:** agents can only fetch files knock indexed, never `../../anything`.
 
-## Development
+> [!IMPORTANT]
+> Whatever your agent retrieves through knock goes into the agent's context, just as if it had read the file itself. Exclude anything sensitive with a `.knockignore` file. Details: [docs/security.md](docs/security.md).
+
+## ❓ FAQ
+
+<details>
+<summary><b>So it saves tokens?</b></summary>
+
+That's the goal, and the benchmark shows far less text reaching the agent. But your bill also includes system prompts, reasoning, and output, and prompt caching already discounts repeated input. Expect the biggest wins on exploration-heavy questions ("how does X work?", "where is Y?", "how do we deploy?"), and little on pure code-writing. Faster answers and memory across sessions are wins either way.
+</details>
+
+<details>
+<summary><b>Do I need an API key or a paid model?</b></summary>
+
+No. Indexing and search are fully deterministic and local. The only thing that uses an API is the optional benchmark.
+</details>
+
+<details>
+<summary><b>Which agents work with it?</b></summary>
+
+Any agent that supports MCP over stdio. Verified so far: the official MCP Python SDK client (all tools), and Claude Code (connects and discovers all 8 tools). Cursor, Windsurf and others should work but are untested. Setup: [docs/agents.md](docs/agents.md).
+</details>
+
+<details>
+<summary><b>Which languages and files does it understand?</b></summary>
+
+Python (deeply, via its syntax tree), plus JavaScript/TypeScript, Go, Rust, Java, Kotlin, C#, Ruby, PHP, Swift, C/C++ and more. It also reads Markdown and reStructuredText docs, ADRs, `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, Dockerfiles, Makefiles, GitHub Actions, linter configs and git history. Full list: [docs/architecture.md](docs/architecture.md#supported-files).
+</details>
+
+<details>
+<summary><b>What if the docs are wrong or outdated?</b></summary>
+
+Every note is labelled with where it came from (`extracted from docs`, `recorded by an agent`, `git history`) and how fresh it is. Agents can mark a note as wrong, and it stays hidden until the source changes. The real file is always one `get_source` away.
+</details>
+
+<details>
+<summary><b>How is this different from "RAG over my repo"?</b></summary>
+
+No embeddings and no vector database. knock stores **small structured facts that point back to exact lines**, tracks when those lines change, and lets agents add what they learn. It's closer to a team wiki that maintains itself than to a search index.
+</details>
+
+## 🗺️ Status
+
+knock is an early **MVP** (v0.1). What works today and what's next:
+
+- [x] Incremental, resumable indexing that respects `.gitignore` and skips secrets
+- [x] Structured knowledge with sources, freshness and lifecycle
+- [x] MCP server with 8 tools, caching and local metrics
+- [x] Reproducible benchmark with a held-out repo
+- [ ] Model-in-the-loop token and cost benchmark (harness ready)
+- [ ] Smarter matching for synonyms, and indexing module-level variables
+- [ ] Optional AI-assisted extraction (opt-in, disclosed)
+- [ ] Sharing knowledge across a team
+
+## 🤝 Contributing
+
+Issues and PRs are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
-.venv/bin/pip install -e '.[dev]'
-.venv/bin/pytest                                   # unit + integration tests (incl. a real stdio MCP session)
-.venv/bin/python benchmarks/retrieval_bench.py     # deterministic benchmark (clones Flask 3.1.2 once)
+.venv/bin/pip install -e '.[dev]' && .venv/bin/pytest
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/troubleshooting.md](docs/troubleshooting.md).
+Deeper docs: [Architecture](docs/architecture.md) · [Security](docs/security.md) · [Agents](docs/agents.md) · [Benchmark](docs/benchmark.md) · [Troubleshooting](docs/troubleshooting.md)
 
-## License
+## 📜 License
 
-Apache-2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). All runtime dependencies use permissive licences (MIT, BSD-3-Clause, Apache-2.0, PSF-2.0).
+[Apache-2.0](LICENSE)
