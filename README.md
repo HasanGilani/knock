@@ -184,6 +184,7 @@ Measured with a reproducible benchmark: 12 engineering tasks per repo, covering 
 - **Flask** (used during development, so optimistic): knock 12/12 with 92K chars, baselines 7/12 with 2.1M and 247K chars.
 - **Speed:** a ~200-file repo indexes in 0.3–0.6 s; re-indexing with no changes takes ~30 ms.
 - **What this measures:** whether the facts *reached* the agent, not whether the agent then solved the task. The baselines are simulations of agent behaviour.
+- **In real Claude Code sessions** (Flask, 3 runs each): knock was break-even on a bug investigation and slightly *more* expensive on an easy follow-up task, where its extra steps outweigh a single search. Expect the benefit, if any, on larger or unfamiliar codebases; that hasn't been measured yet. Details in [docs/benchmark.md](docs/benchmark.md#claude-code-recordings-side-by-side).
 - **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.
 - **Where knock missed:** wording mismatches ("linters" vs "lint") and module-level variables it doesn't index yet.
 

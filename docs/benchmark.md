@@ -94,7 +94,22 @@ Both conditions answered correctly and made the same one-line change. **knock di
 2. `get_context` filled its budget with off-topic notes (6 of 8 on Monday). Query words are now weighted by rarity in the repository, a few generic code synonyms are applied, and results scoring below 60% of the best match are dropped.
 3. Code could only be found by name. Python functions now also record what they call, catch, raise and read (e.g. `open_session` catches `BadSignature`), so Tuesday's target function ranks second instead of not appearing.
 
-Also visible: Claude without knock hit the same blocked commands (3 times), so single runs are noisy. The recordings have **not yet been repeated** with the fixed version. A fair re-test should use several runs per condition and, ideally, a codebase Claude doesn't already know.
+Also visible: Claude without knock hit the same blocked commands (3 times), so single runs are noisy.
+
+### Re-recorded after the fixes (3 runs per condition, 2026-10-31)
+
+Same scenario, same model (`claude-sonnet-5`), knock memory reset before each "with knock" Monday. Medians, with the range in brackets; times and costs as reported by Claude Code.
+
+| | without knock | with knock |
+|---|---|---|
+| Monday (bug question) | 141 s [98–158] · $0.28 [$0.20–0.31] · 16 tool calls | 127 s [124–140] · $0.27 [$0.25–0.32] · 17 tool calls |
+| Tuesday (add debug log) | 24 s [21–38] · $0.07 [$0.06–0.10] · 6 tool calls | 30 s [30–45] · $0.10 [$0.09–0.15] · 7 tool calls |
+
+All 12 sessions answered correctly (function, file, fix commit and Flask version), and all six Tuesday changes add an equivalent debug log in `open_session`.
+
+**Result: no measurable win on this scenario.** Monday is a wash: the ranges overlap almost completely. Tuesday is about $0.03 and 6 s *worse* with knock. Memory worked (in two of three runs, Monday's saved finding was the first thing knock returned, and `open_session` was the top symbol), but this task is found by a single search in a 200-file repo Claude already knows. knock's extra steps (loading its tools, calling `get_context`, saving a finding at the end) are pure overhead there. In both conditions Claude also spent turns on shell commands the session wasn't allowed to run.
+
+What this does and doesn't show: knock doesn't pay off on small, well-known repositories with easy tasks. Whether it pays off on large or unfamiliar codebases, where exploration is expensive, hasn't been measured yet.
 
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
