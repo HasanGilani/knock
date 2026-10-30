@@ -1,0 +1,729 @@
+{
+  "knock_version": "0.1.0",
+  "python": "3.10.0",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "repository": {
+    "name": "flask",
+    "url": "https://github.com/pallets/flask.git",
+    "ref": "3.1.2",
+    "commit": "2c1b30d0503cfb064f1cb252e6614a06915a362a",
+    "history_depth": 200
+  },
+  "task_set_role": "development set: knock's extractors and ranking were adjusted while looking at results on this repository, so these results are optimistic",
+  "ingestion": {
+    "cold_index_ms": 579,
+    "noop_refresh_ms": 30,
+    "files_indexed": 196,
+    "files_reprocessed_on_noop": 0,
+    "knowledge_items_active": 548,
+    "symbols": 1265,
+    "database_bytes": 6258792,
+    "model_calls": 0
+  },
+  "baseline": {
+    "passed": 7,
+    "tasks": 12,
+    "total_chars": 2141848,
+    "median_chars": 180399.5,
+    "est_total_tokens": 535462,
+    "total_tool_calls": 72
+  },
+  "baseline_targeted": {
+    "passed": 7,
+    "tasks": 12,
+    "total_chars": 246604,
+    "median_chars": 21842.5,
+    "est_total_tokens": 61651,
+    "total_tool_calls": 60
+  },
+  "knock": {
+    "passed": 12,
+    "tasks": 12,
+    "total_chars": 107164,
+    "median_chars": 7626.5,
+    "est_total_tokens": 26791,
+    "total_tool_calls": 14
+  },
+  "oracle_total_chars": 244044,
+  "cache": {
+    "repeat_context_ms_median": 23.15,
+    "first_context_ms_median": 63.7,
+    "repeat_hits": 12,
+    "metrics": {
+      "hits": 12,
+      "misses": 12,
+      "hit_rate": 0.5,
+      "entries": 12,
+      "bytes": 37288,
+      "max_entries": 1000,
+      "max_bytes": 16777216
+    }
+  },
+  "staleness_scenario": {
+    "edit": "docs/deploying/gunicorn.rst: 'gunicorn -w 4' -> 'gunicorn --workers 8' (not yet re-indexed)",
+    "before_refresh": {
+      "served_outdated_text": true,
+      "flagged_as_stale": true,
+      "freshness": {
+        "state": "stale",
+        "indexed_revision": "2c1b30d050",
+        "head_revision": "2c1b30d050",
+        "files_modified_since_index": 1,
+        "advice": "Call refresh_repository (incremental, deterministic, no model calls) or verify with get_source."
+      }
+    },
+    "refresh": {
+      "files_modified": 1,
+      "files_unchanged": 195,
+      "knowledge_updated": 1,
+      "knowledge_invalidated": 0,
+      "duration_ms": 36
+    },
+    "after_refresh": {
+      "serves_new_text": true,
+      "serves_old_text": false
+    }
+  },
+  "tasks": [
+    {
+      "id": "arch-contexts",
+      "type": "architecture",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 156618,
+        "tool_calls": 6,
+        "files_read": [
+          "src/flask/app.py",
+          "CHANGES.rst",
+          "docs/appcontext.rst"
+        ],
+        "terms": [
+          "relate",
+          "context",
+          "application"
+        ],
+        "latency_ms": 4.9
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "src/flask/ctx\\.py"
+        ],
+        "chars": 23170,
+        "tool_calls": 5,
+        "files_read": [
+          "src/flask/app.py",
+          "CHANGES.rst"
+        ],
+        "terms": [
+          "relate",
+          "context",
+          "application"
+        ],
+        "latency_ms": 19.9
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7289,
+        "tool_calls": 1,
+        "context_chars": 7289,
+        "followed_sources": [],
+        "latency_ms": 51.4,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "src/flask/ctx.py",
+        "chars": 16751
+      }
+    },
+    {
+      "id": "arch-dispatch",
+      "type": "architecture",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 210209,
+        "tool_calls": 6,
+        "files_read": [
+          "CHANGES.rst",
+          "src/flask/app.py",
+          "tests/test_basic.py"
+        ],
+        "terms": [
+          "incoming",
+          "matching",
+          "dispatch"
+        ],
+        "latency_ms": 6.6
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 21728,
+        "tool_calls": 5,
+        "files_read": [
+          "CHANGES.rst",
+          "src/flask/app.py"
+        ],
+        "terms": [
+          "incoming",
+          "matching",
+          "dispatch"
+        ],
+        "latency_ms": 18.2
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7623,
+        "tool_calls": 1,
+        "context_chars": 7623,
+        "followed_sources": [],
+        "latency_ms": 66.8,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "src/flask/app.py",
+        "chars": 68316
+      }
+    },
+    {
+      "id": "locate-blueprint-register",
+      "type": "locate-feature",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 154866,
+        "tool_calls": 6,
+        "files_read": [
+          "src/flask/sansio/app.py",
+          "CHANGES.rst",
+          "src/flask/sansio/scaffold.py"
+        ],
+        "terms": [
+          "registers",
+          "routes",
+          "handlers"
+        ],
+        "latency_ms": 5.9
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 21957,
+        "tool_calls": 5,
+        "files_read": [
+          "src/flask/sansio/app.py",
+          "CHANGES.rst"
+        ],
+        "terms": [
+          "registers",
+          "routes",
+          "handlers"
+        ],
+        "latency_ms": 17.2
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7239,
+        "tool_calls": 1,
+        "context_chars": 7239,
+        "followed_sources": [],
+        "latency_ms": 54.0,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "src/flask/sansio/blueprints.py",
+        "chars": 27056
+      }
+    },
+    {
+      "id": "locate-default-config",
+      "type": "locate-feature",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 155111,
+        "tool_calls": 6,
+        "files_read": [
+          "docs/config.rst",
+          "src/flask/sansio/app.py",
+          "CHANGES.rst"
+        ],
+        "terms": [
+          "defined",
+          "configuration",
+          "values"
+        ],
+        "latency_ms": 5.6
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "default_config"
+        ],
+        "chars": 24916,
+        "tool_calls": 5,
+        "files_read": [
+          "docs/config.rst",
+          "src/flask/sansio/app.py"
+        ],
+        "terms": [
+          "defined",
+          "configuration",
+          "values"
+        ],
+        "latency_ms": 17.8
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7814,
+        "tool_calls": 1,
+        "context_chars": 7814,
+        "followed_sources": [],
+        "latency_ms": 54.9,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "src/flask/app.py",
+        "chars": 68316
+      }
+    },
+    {
+      "id": "deploy-gunicorn",
+      "type": "deployment",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "gunicorn -w"
+        ],
+        "chars": 180667,
+        "tool_calls": 6,
+        "files_read": [
+          "CHANGES.rst",
+          "src/flask/app.py",
+          "docs/config.rst"
+        ],
+        "terms": [
+          "gunicorn",
+          "production",
+          "give"
+        ],
+        "latency_ms": 8.3
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 23431,
+        "tool_calls": 5,
+        "files_read": [
+          "CHANGES.rst",
+          "src/flask/app.py"
+        ],
+        "terms": [
+          "gunicorn",
+          "production",
+          "give"
+        ],
+        "latency_ms": 18.5
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7630,
+        "tool_calls": 1,
+        "context_chars": 7630,
+        "followed_sources": [],
+        "latency_ms": 63.5,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "docs/deploying/gunicorn.rst",
+        "chars": 4453
+      }
+    },
+    {
+      "id": "workflow-tests",
+      "type": "deployment",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 280970,
+        "tool_calls": 6,
+        "files_read": [
+          "pyproject.toml",
+          "uv.lock",
+          ".github/workflows/tests.yaml"
+        ],
+        "terms": [
+          "suite",
+          "environments",
+          "tox"
+        ],
+        "latency_ms": 7.8
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 23020,
+        "tool_calls": 5,
+        "files_read": [
+          "pyproject.toml",
+          "uv.lock"
+        ],
+        "terms": [
+          "suite",
+          "environments",
+          "tox"
+        ],
+        "latency_ms": 17.5
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7259,
+        "tool_calls": 1,
+        "context_chars": 7259,
+        "followed_sources": [],
+        "latency_ms": 56.8,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "pyproject.toml",
+        "chars": 7557
+      }
+    },
+    {
+      "id": "bug-ide-debugger",
+      "type": "bug",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 118607,
+        "tool_calls": 6,
+        "files_read": [
+          "docs/debugging.rst",
+          "docs/quickstart.rst",
+          "CHANGES.rst"
+        ],
+        "terms": [
+          "breakpoints",
+          "hit",
+          "debugger"
+        ],
+        "latency_ms": 10.5
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 14405,
+        "tool_calls": 5,
+        "files_read": [
+          "docs/debugging.rst",
+          "docs/quickstart.rst"
+        ],
+        "terms": [
+          "breakpoints",
+          "hit",
+          "debugger"
+        ],
+        "latency_ms": 19.0
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7318,
+        "tool_calls": 1,
+        "context_chars": 7318,
+        "followed_sources": [],
+        "latency_ms": 73.3,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "docs/debugging.rst",
+        "chars": 3749
+      }
+    },
+    {
+      "id": "bug-secret-key-fallbacks",
+      "type": "bug",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 209401,
+        "tool_calls": 6,
+        "files_read": [
+          "src/flask/app.py",
+          "tests/test_basic.py",
+          "CHANGES.rst"
+        ],
+        "terms": [
+          "listed",
+          "secret_key_fallbacks",
+          "fallbacks"
+        ],
+        "latency_ms": 10.3
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 11474,
+        "tool_calls": 5,
+        "files_read": [
+          "src/flask/app.py",
+          "tests/test_basic.py"
+        ],
+        "terms": [
+          "listed",
+          "secret_key_fallbacks",
+          "fallbacks"
+        ],
+        "latency_ms": 18.7
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7914,
+        "tool_calls": 1,
+        "context_chars": 7914,
+        "followed_sources": [],
+        "latency_ms": 80.7,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "src/flask/sessions.py",
+        "chars": 16967
+      }
+    },
+    {
+      "id": "why-explicit-app",
+      "type": "rationale",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "one instance"
+        ],
+        "chars": 180132,
+        "tool_calls": 6,
+        "files_read": [
+          "CHANGES.rst",
+          "docs/config.rst",
+          "src/flask/app.py"
+        ],
+        "terms": [
+          "implicit",
+          "explicit",
+          "creating"
+        ],
+        "latency_ms": 8.2
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 19311,
+        "tool_calls": 5,
+        "files_read": [
+          "CHANGES.rst",
+          "docs/config.rst"
+        ],
+        "terms": [
+          "implicit",
+          "explicit",
+          "creating"
+        ],
+        "latency_ms": 16.9
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 18781,
+        "tool_calls": 2,
+        "context_chars": 7771,
+        "followed_sources": [
+          "docs/design.rst"
+        ],
+        "latency_ms": 71.0,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "docs/views.rst",
+        "chars": 11457
+      }
+    },
+    {
+      "id": "why-context-locals",
+      "type": "rationale",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "thread local",
+          "large applications|asynchronous servers"
+        ],
+        "chars": 183470,
+        "tool_calls": 6,
+        "files_read": [
+          "CHANGES.rst",
+          "docs/quickstart.rst",
+          "src/flask/app.py"
+        ],
+        "terms": [
+          "explicitly",
+          "proxies",
+          "passing"
+        ],
+        "latency_ms": 11.9
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "thread local",
+          "large applications|asynchronous servers"
+        ],
+        "chars": 20037,
+        "tool_calls": 5,
+        "files_read": [
+          "CHANGES.rst",
+          "docs/quickstart.rst"
+        ],
+        "terms": [
+          "explicitly",
+          "proxies",
+          "passing"
+        ],
+        "latency_ms": 18.1
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7198,
+        "tool_calls": 1,
+        "context_chars": 7198,
+        "followed_sources": [],
+        "latency_ms": 73.2,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "docs/design.rst",
+        "chars": 11865
+      }
+    },
+    {
+      "id": "convention-new-config",
+      "type": "modify-with-conventions",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "default_config"
+        ],
+        "chars": 298878,
+        "tool_calls": 6,
+        "files_read": [
+          "docs/patterns/viewdecorators.rst",
+          "uv.lock",
+          "docs/errorhandling.rst"
+        ],
+        "terms": [
+          "lint",
+          "live",
+          "tools"
+        ],
+        "latency_ms": 12.8
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "default_config"
+        ],
+        "chars": 25113,
+        "tool_calls": 5,
+        "files_read": [
+          "docs/patterns/viewdecorators.rst",
+          "uv.lock"
+        ],
+        "terms": [
+          "lint",
+          "live",
+          "tools"
+        ],
+        "latency_ms": 19.9
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7651,
+        "tool_calls": 1,
+        "context_chars": 7651,
+        "followed_sources": [],
+        "latency_ms": 63.9,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": null,
+        "chars": null
+      }
+    },
+    {
+      "id": "convention-imports",
+      "type": "modify-with-conventions",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "ruff",
+          "force-single-line"
+        ],
+        "chars": 12919,
+        "tool_calls": 6,
+        "files_read": [
+          "docs/_static/flask-name.svg",
+          "docs/tutorial/static.rst",
+          "docs/_static/flask-logo.svg"
+        ],
+        "terms": [
+          "sorting",
+          "enforce",
+          "style"
+        ],
+        "latency_ms": 6.3
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "ruff",
+          "force-single-line"
+        ],
+        "chars": 18042,
+        "tool_calls": 5,
+        "files_read": [
+          "docs/_static/flask-name.svg",
+          "docs/tutorial/static.rst"
+        ],
+        "terms": [
+          "sorting",
+          "enforce",
+          "style"
+        ],
+        "latency_ms": 14.7
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 13448,
+        "tool_calls": 2,
+        "context_chars": 7784,
+        "followed_sources": [
+          "pyproject.toml"
+        ],
+        "latency_ms": 43.3,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "pyproject.toml",
+        "chars": 7557
+      }
+    }
+  ]
+}

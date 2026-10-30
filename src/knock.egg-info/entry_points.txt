@@ -1,0 +1,2 @@
+[console_scripts]
+knock = knock.cli:main

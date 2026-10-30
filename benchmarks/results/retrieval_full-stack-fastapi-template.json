@@ -1,0 +1,734 @@
+{
+  "knock_version": "0.1.0",
+  "python": "3.10.0",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "repository": {
+    "name": "full-stack-fastapi-template",
+    "url": "https://github.com/fastapi/full-stack-fastapi-template.git",
+    "ref": "0.9.0",
+    "commit": "e4022a9502a6b61c857e3cbdaddc69e7219c9d53",
+    "history_depth": 200
+  },
+  "task_set_role": "held-out set: tasks were written and checked against the repository before knock was run on it, and knock was not changed after seeing these results",
+  "ingestion": {
+    "cold_index_ms": 310,
+    "noop_refresh_ms": 30,
+    "files_indexed": 196,
+    "files_reprocessed_on_noop": 0,
+    "knowledge_items_active": 235,
+    "symbols": 653,
+    "database_bytes": 5341432,
+    "model_calls": 0
+  },
+  "baseline": {
+    "passed": 9,
+    "tasks": 12,
+    "total_chars": 1215570,
+    "median_chars": 117923.5,
+    "est_total_tokens": 303893,
+    "total_tool_calls": 72
+  },
+  "baseline_targeted": {
+    "passed": 7,
+    "tasks": 12,
+    "total_chars": 328206,
+    "median_chars": 27085.5,
+    "est_total_tokens": 82052,
+    "total_tool_calls": 60
+  },
+  "knock": {
+    "passed": 10,
+    "tasks": 12,
+    "total_chars": 122506,
+    "median_chars": 7611.5,
+    "est_total_tokens": 30627,
+    "total_tool_calls": 17
+  },
+  "oracle_total_chars": 160947,
+  "cache": {
+    "repeat_context_ms_median": 22.09,
+    "first_context_ms_median": 36.75,
+    "repeat_hits": 12,
+    "metrics": {
+      "hits": 12,
+      "misses": 12,
+      "hit_rate": 0.5,
+      "entries": 12,
+      "bytes": 34583,
+      "max_entries": 1000,
+      "max_bytes": 16777216
+    }
+  },
+  "staleness_scenario": {
+    "edit": "backend/README.md: 'alembic upgrade head' -> 'alembic migrate --to-latest' (not yet re-indexed)",
+    "before_refresh": {
+      "served_outdated_text": true,
+      "flagged_as_stale": true,
+      "freshness": {
+        "state": "stale",
+        "indexed_revision": "e4022a9502",
+        "head_revision": "e4022a9502",
+        "files_modified_since_index": 1,
+        "advice": "Call refresh_repository (incremental, deterministic, no model calls) or verify with get_source."
+      }
+    },
+    "refresh": {
+      "files_modified": 1,
+      "files_unchanged": 195,
+      "knowledge_updated": 1,
+      "knowledge_invalidated": 0,
+      "duration_ms": 35
+    },
+    "after_refresh": {
+      "serves_new_text": true,
+      "serves_old_text": false
+    }
+  },
+  "tasks": [
+    {
+      "id": "arch-stack",
+      "type": "architecture",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 122639,
+        "tool_calls": 6,
+        "files_read": [
+          "release-notes.md",
+          "development.md",
+          "README.md"
+        ],
+        "terms": [
+          "database",
+          "frontend",
+          "backend"
+        ],
+        "latency_ms": 6.5
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 41375,
+        "tool_calls": 5,
+        "files_read": [
+          "release-notes.md",
+          "development.md"
+        ],
+        "terms": [
+          "database",
+          "frontend",
+          "backend"
+        ],
+        "latency_ms": 15.2
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7772,
+        "tool_calls": 1,
+        "context_chars": 7772,
+        "followed_sources": [],
+        "latency_ms": 48.8,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "README.md",
+        "chars": 9783
+      }
+    },
+    {
+      "id": "arch-routers",
+      "type": "architecture",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "backend/app/api/main\\.py"
+        ],
+        "chars": 118382,
+        "tool_calls": 6,
+        "files_read": [
+          "release-notes.md",
+          "docker-compose.yml",
+          "backend/README.md"
+        ],
+        "terms": [
+          "combined",
+          "routers",
+          "backend"
+        ],
+        "latency_ms": 7.8
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "backend/app/api/main\\.py",
+          "include_router|api_router"
+        ],
+        "chars": 37859,
+        "tool_calls": 5,
+        "files_read": [
+          "release-notes.md",
+          "docker-compose.yml"
+        ],
+        "terms": [
+          "combined",
+          "routers",
+          "backend"
+        ],
+        "latency_ms": 15.0
+      },
+      "knock": {
+        "pass": false,
+        "missing": [
+          "backend/app/api/main\\.py",
+          "include_router|api_router"
+        ],
+        "chars": 16554,
+        "tool_calls": 3,
+        "context_chars": 7637,
+        "followed_sources": [
+          "backend/app/api/routes/items.py",
+          "backend/app/api/routes/login.py"
+        ],
+        "latency_ms": 44.0,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "backend/app/api/main.py",
+        "chars": 433
+      }
+    },
+    {
+      "id": "locate-password-recovery",
+      "type": "locate-feature",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 113300,
+        "tool_calls": 6,
+        "files_read": [
+          "release-notes.md",
+          "frontend/tests/reset-password.spec.ts",
+          "backend/app/api/routes/login.py"
+        ],
+        "terms": [
+          "endpoint",
+          "recovery",
+          "password"
+        ],
+        "latency_ms": 5.7
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 30364,
+        "tool_calls": 5,
+        "files_read": [
+          "release-notes.md",
+          "frontend/tests/reset-password.spec.ts"
+        ],
+        "terms": [
+          "endpoint",
+          "recovery",
+          "password"
+        ],
+        "latency_ms": 11.3
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7295,
+        "tool_calls": 1,
+        "context_chars": 7295,
+        "followed_sources": [],
+        "latency_ms": 29.0,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "backend/app/api/routes/login.py",
+        "chars": 4434
+      }
+    },
+    {
+      "id": "locate-jwt",
+      "type": "locate-feature",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "create_access_token"
+        ],
+        "chars": 133137,
+        "tool_calls": 6,
+        "files_read": [
+          "backend/tests/api/routes/test_users.py",
+          "release-notes.md",
+          "deployment.md"
+        ],
+        "terms": [
+          "tokens",
+          "jwt",
+          "created"
+        ],
+        "latency_ms": 6.4
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "create_access_token"
+        ],
+        "chars": 27074,
+        "tool_calls": 5,
+        "files_read": [
+          "backend/tests/api/routes/test_users.py",
+          "release-notes.md"
+        ],
+        "terms": [
+          "tokens",
+          "jwt",
+          "created"
+        ],
+        "latency_ms": 15.9
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7559,
+        "tool_calls": 1,
+        "context_chars": 7559,
+        "followed_sources": [],
+        "latency_ms": 37.2,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "backend/app/core/security.py",
+        "chars": 841
+      }
+    },
+    {
+      "id": "deploy-production",
+      "type": "deployment",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 119092,
+        "tool_calls": 6,
+        "files_read": [
+          "deployment.md",
+          "release-notes.md",
+          "docker-compose.traefik.yml"
+        ],
+        "terms": [
+          "deployed",
+          "certificates",
+          "application"
+        ],
+        "latency_ms": 5.0
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 27270,
+        "tool_calls": 5,
+        "files_read": [
+          "deployment.md",
+          "release-notes.md"
+        ],
+        "terms": [
+          "deployed",
+          "certificates",
+          "application"
+        ],
+        "latency_ms": 11.5
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7265,
+        "tool_calls": 1,
+        "context_chars": 7265,
+        "followed_sources": [],
+        "latency_ms": 31.7,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "development.md",
+        "chars": 9149
+      }
+    },
+    {
+      "id": "workflow-backend-tests",
+      "type": "deployment",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 117465,
+        "tool_calls": 6,
+        "files_read": [
+          "release-notes.md",
+          "backend/README.md",
+          ".github/workflows/playwright.yml"
+        ],
+        "terms": [
+          "tests",
+          "backend",
+          "run"
+        ],
+        "latency_ms": 5.4
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 46127,
+        "tool_calls": 5,
+        "files_read": [
+          "release-notes.md",
+          "backend/README.md"
+        ],
+        "terms": [
+          "tests",
+          "backend",
+          "run"
+        ],
+        "latency_ms": 13.4
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7273,
+        "tool_calls": 1,
+        "context_chars": 7273,
+        "followed_sources": [],
+        "latency_ms": 36.3,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "backend/scripts/test.sh",
+        "chars": 135
+      }
+    },
+    {
+      "id": "bug-container-stops",
+      "type": "bug",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 119994,
+        "tool_calls": 6,
+        "files_read": [
+          "backend/README.md",
+          "development.md",
+          "release-notes.md"
+        ],
+        "terms": [
+          "during",
+          "running",
+          "development"
+        ],
+        "latency_ms": 6.9
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 21594,
+        "tool_calls": 5,
+        "files_read": [
+          "development.md",
+          "backend/README.md"
+        ],
+        "terms": [
+          "during",
+          "running",
+          "development"
+        ],
+        "latency_ms": 15.1
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 16285,
+        "tool_calls": 2,
+        "context_chars": 7442,
+        "followed_sources": [
+          "backend/README.md"
+        ],
+        "latency_ms": 45.8,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "backend/README.md",
+        "chars": 8338
+      }
+    },
+    {
+      "id": "bug-first-start",
+      "type": "bug",
+      "baseline": {
+        "pass": false,
+        "missing": [
+          "first time"
+        ],
+        "chars": 14116,
+        "tool_calls": 6,
+        "files_read": [
+          "deployment.md",
+          "frontend/src/components/Common/ErrorComponent.tsx",
+          "frontend/src/hooks/useCustomToast.ts"
+        ],
+        "terms": [
+          "respond",
+          "broken",
+          "something"
+        ],
+        "latency_ms": 6.6
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "first time"
+        ],
+        "chars": 7151,
+        "tool_calls": 5,
+        "files_read": [
+          "deployment.md",
+          "frontend/src/components/Common/ErrorComponent.tsx"
+        ],
+        "terms": [
+          "respond",
+          "broken",
+          "something"
+        ],
+        "latency_ms": 13.3
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7624,
+        "tool_calls": 1,
+        "context_chars": 7624,
+        "followed_sources": [],
+        "latency_ms": 33.6,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "development.md",
+        "chars": 9149
+      }
+    },
+    {
+      "id": "why-compose-file",
+      "type": "rationale",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 124626,
+        "tool_calls": 6,
+        "files_read": [
+          "deployment.md",
+          "release-notes.md",
+          "README.md"
+        ],
+        "terms": [
+          "specify",
+          "explicitly",
+          "deployment"
+        ],
+        "latency_ms": 6.3
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 27097,
+        "tool_calls": 5,
+        "files_read": [
+          "deployment.md",
+          "release-notes.md"
+        ],
+        "terms": [
+          "specify",
+          "explicitly",
+          "deployment"
+        ],
+        "latency_ms": 13.4
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7599,
+        "tool_calls": 1,
+        "context_chars": 7599,
+        "followed_sources": [],
+        "latency_ms": 33.6,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "docker-compose.override.yml",
+        "chars": 4167
+      }
+    },
+    {
+      "id": "bug-cors-parsing",
+      "type": "bug",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 113648,
+        "tool_calls": 6,
+        "files_read": [
+          "backend/app/core/config.py",
+          "docker-compose.yml",
+          "release-notes.md"
+        ],
+        "terms": [
+          "backend_cors_origins",
+          "empty",
+          "cors"
+        ],
+        "latency_ms": 7.8
+      },
+      "baseline_targeted": {
+        "pass": true,
+        "missing": [],
+        "chars": 26198,
+        "tool_calls": 5,
+        "files_read": [
+          "backend/app/core/config.py",
+          "release-notes.md"
+        ],
+        "terms": [
+          "backend_cors_origins",
+          "empty",
+          "cors"
+        ],
+        "latency_ms": 14.5
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7731,
+        "tool_calls": 1,
+        "context_chars": 7731,
+        "followed_sources": [],
+        "latency_ms": 42.0,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "backend/app/core/config.py",
+        "chars": 4032
+      }
+    },
+    {
+      "id": "convention-lint",
+      "type": "modify-with-conventions",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 105929,
+        "tool_calls": 6,
+        "files_read": [
+          "backend/alembic.ini",
+          "release-notes.md",
+          ".github/workflows/latest-changes.yml"
+        ],
+        "terms": [
+          "formatters",
+          "changes",
+          "must"
+        ],
+        "latency_ms": 7.8
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "biome"
+        ],
+        "chars": 25189,
+        "tool_calls": 5,
+        "files_read": [
+          "backend/alembic.ini",
+          "release-notes.md"
+        ],
+        "terms": [
+          "formatters",
+          "changes",
+          "must"
+        ],
+        "latency_ms": 14.9
+      },
+      "knock": {
+        "pass": false,
+        "missing": [
+          "ruff",
+          "mypy",
+          "biome"
+        ],
+        "chars": 22078,
+        "tool_calls": 3,
+        "context_chars": 7676,
+        "followed_sources": [
+          "frontend/src/client/types.gen.ts",
+          "deployment.md"
+        ],
+        "latency_ms": 55.1,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "release-notes.md",
+        "chars": 102148
+      }
+    },
+    {
+      "id": "modify-migration",
+      "type": "modify-with-conventions",
+      "baseline": {
+        "pass": true,
+        "missing": [],
+        "chars": 13242,
+        "tool_calls": 6,
+        "files_read": [
+          "backend/alembic.ini",
+          "backend/README.md",
+          "backend/app/alembic/env.py"
+        ],
+        "terms": [
+          "apply",
+          "migration",
+          "database"
+        ],
+        "latency_ms": 5.6
+      },
+      "baseline_targeted": {
+        "pass": false,
+        "missing": [
+          "alembic revision --autogenerate",
+          "alembic upgrade head"
+        ],
+        "chars": 10908,
+        "tool_calls": 5,
+        "files_read": [
+          "backend/alembic.ini",
+          "backend/app/alembic/env.py"
+        ],
+        "terms": [
+          "apply",
+          "migration",
+          "database"
+        ],
+        "latency_ms": 15.8
+      },
+      "knock": {
+        "pass": true,
+        "missing": [],
+        "chars": 7471,
+        "tool_calls": 1,
+        "context_chars": 7471,
+        "followed_sources": [],
+        "latency_ms": 34.2,
+        "freshness": "fresh"
+      },
+      "oracle": {
+        "file": "backend/README.md",
+        "chars": 8338
+      }
+    }
+  ]
+}

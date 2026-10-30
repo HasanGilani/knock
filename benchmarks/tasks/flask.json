@@ -1,0 +1,126 @@
+{
+  "repository": {
+    "name": "flask",
+    "url": "https://github.com/pallets/flask.git",
+    "ref": "3.1.2",
+    "commit": "2c1b30d0503cfb064f1cb252e6614a06915a362a",
+    "history_depth": 200
+  },
+  "role": "development set: knock's extractors and ranking were adjusted while looking at results on this repository, so these results are optimistic",
+  "grading": "A task passes when every regex in `required` (case-insensitive) occurs in the text the workflow consumed. Patterns name the facts an engineer needs to answer the task; they were checked against the pinned commit.",
+  "tasks": [
+    {
+      "id": "arch-contexts",
+      "type": "architecture",
+      "prompt": "How are the application context and the request context implemented, and how do they relate to each other?",
+      "required": [
+        "AppContext",
+        "RequestContext",
+        "src/flask/ctx\\.py"
+      ]
+    },
+    {
+      "id": "arch-dispatch",
+      "type": "architecture",
+      "prompt": "How does Flask dispatch an incoming request to the matching view function?",
+      "required": [
+        "full_dispatch_request",
+        "src/flask/app\\.py"
+      ]
+    },
+    {
+      "id": "locate-blueprint-register",
+      "type": "locate-feature",
+      "prompt": "Where is the code that registers a blueprint's routes and handlers on the application?",
+      "required": [
+        "src/flask/sansio/blueprints\\.py",
+        "register"
+      ]
+    },
+    {
+      "id": "locate-default-config",
+      "type": "locate-feature",
+      "prompt": "Where are the default configuration values for a Flask application defined?",
+      "required": [
+        "default_config",
+        "src/flask/app\\.py"
+      ]
+    },
+    {
+      "id": "deploy-gunicorn",
+      "type": "deployment",
+      "prompt": "How should a Flask app be run in production with Gunicorn? Give the command to start it.",
+      "required": [
+        "gunicorn -w"
+      ]
+    },
+    {
+      "id": "workflow-tests",
+      "type": "deployment",
+      "prompt": "How do I run the project's test suite, and which tox environments exist?",
+      "required": [
+        "pytest",
+        "tox",
+        "tests-min"
+      ]
+    },
+    {
+      "id": "bug-ide-debugger",
+      "type": "bug",
+      "prompt": "Breakpoints set in my IDE debugger are not hit when I run the Flask app in debug mode. What does the documentation recommend?",
+      "required": [
+        "no-reload|use_reloader=False"
+      ]
+    },
+    {
+      "id": "bug-secret-key-fallbacks",
+      "type": "bug",
+      "prompt": "After rotating SECRET_KEY, sessions signed with an old key listed in SECRET_KEY_FALLBACKS are rejected. Where is fallback key handling implemented?",
+      "required": [
+        "SECRET_KEY_FALLBACKS",
+        "src/flask/sessions\\.py"
+      ]
+    },
+    {
+      "id": "why-explicit-app",
+      "type": "rationale",
+      "prompt": "Why does Flask require creating an explicit application object instead of using an implicit global one?",
+      "required": [
+        "one instance"
+      ]
+    },
+    {
+      "id": "why-context-locals",
+      "type": "rationale",
+      "prompt": "Why does Flask use context-local proxies such as request and g instead of passing objects explicitly to views?",
+      "required": [
+        "thread local",
+        "large applications|asynchronous servers"
+      ]
+    },
+    {
+      "id": "convention-new-config",
+      "type": "modify-with-conventions",
+      "prompt": "I'm adding a new built-in configuration key. Where do the defaults live, and which lint and format tools must my change pass?",
+      "required": [
+        "default_config",
+        "ruff"
+      ]
+    },
+    {
+      "id": "convention-imports",
+      "type": "modify-with-conventions",
+      "prompt": "What import-sorting style does the project enforce, and with which tool?",
+      "required": [
+        "ruff",
+        "force-single-line"
+      ]
+    }
+  ],
+  "staleness": {
+    "file": "docs/deploying/gunicorn.rst",
+    "old": "gunicorn -w 4",
+    "new": "gunicorn --workers 8",
+    "query": "How should a Flask app be run in production with Gunicorn? Give the command to start it."
+  }
+}

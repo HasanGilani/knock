@@ -1,0 +1,91 @@
+{
+  "repository": {
+    "name": "full-stack-fastapi-template",
+    "url": "https://github.com/fastapi/full-stack-fastapi-template.git",
+    "ref": "0.9.0",
+    "commit": "e4022a9502a6b61c857e3cbdaddc69e7219c9d53",
+    "history_depth": 200
+  },
+  "role": "held-out set: tasks were written and checked against the repository before knock was run on it, and knock was not changed after seeing these results",
+  "grading": "A task passes when every regex in `required` (case-insensitive) occurs in the text the workflow consumed. Patterns name the facts an engineer needs to answer the task; they were checked against the pinned commit.",
+  "tasks": [
+    {
+      "id": "arch-stack",
+      "type": "architecture",
+      "prompt": "What are the main components of this project's stack, and which technologies are used for the backend, frontend and database?",
+      "required": ["FastAPI", "React", "PostgreSQL"]
+    },
+    {
+      "id": "arch-routers",
+      "type": "architecture",
+      "prompt": "How is the backend API organized into routers, and where are they combined?",
+      "required": ["backend/app/api/main\\.py", "include_router|api_router"]
+    },
+    {
+      "id": "locate-password-recovery",
+      "type": "locate-feature",
+      "prompt": "Where is the password recovery endpoint implemented?",
+      "required": ["backend/app/api/routes/login\\.py", "recover_password|password-recovery"]
+    },
+    {
+      "id": "locate-jwt",
+      "type": "locate-feature",
+      "prompt": "Where are JWT access tokens created?",
+      "required": ["backend/app/core/security\\.py", "create_access_token"]
+    },
+    {
+      "id": "deploy-production",
+      "type": "deployment",
+      "prompt": "How is the application deployed to production, and what handles HTTPS certificates?",
+      "required": ["Traefik", "deploy-production\\.yml|deployment\\.md"]
+    },
+    {
+      "id": "workflow-backend-tests",
+      "type": "deployment",
+      "prompt": "How do I run the backend tests?",
+      "required": ["test\\.sh|tests-start\\.sh", "pytest"]
+    },
+    {
+      "id": "bug-container-stops",
+      "type": "bug",
+      "prompt": "My backend container stopped right after I saved a Python file during development. Why, and how do I get it running again?",
+      "required": ["syntax error"]
+    },
+    {
+      "id": "bug-first-start",
+      "type": "bug",
+      "prompt": "The stack does not respond right after I start it for the first time. Is something broken?",
+      "required": ["first time", "database"]
+    },
+    {
+      "id": "why-compose-file",
+      "type": "rationale",
+      "prompt": "Why does the production deployment command explicitly specify docker-compose.yml?",
+      "required": ["override"]
+    },
+    {
+      "id": "bug-cors-parsing",
+      "type": "bug",
+      "prompt": "Empty BACKEND_CORS_ORIGINS values behave inconsistently. Where is the CORS origins parsing implemented?",
+      "required": ["parse_cors", "backend/app/core/config\\.py"]
+    },
+    {
+      "id": "convention-lint",
+      "type": "modify-with-conventions",
+      "prompt": "Which linters, type checkers and formatters must backend and frontend changes pass?",
+      "required": ["ruff", "mypy", "biome"]
+    },
+    {
+      "id": "modify-migration",
+      "type": "modify-with-conventions",
+      "prompt": "I'm adding a column to a database model. How do I create and apply the migration?",
+      "required": ["alembic revision --autogenerate", "alembic upgrade head"]
+    }
+  ],
+  "staleness": {
+    "file": "backend/README.md",
+    "old": "alembic upgrade head",
+    "new": "alembic migrate --to-latest",
+    "query": "I'm adding a column to a database model. How do I create and apply the migration?"
+  }
+}

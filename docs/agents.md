@@ -1,0 +1,85 @@
+# Connecting agents
+
+knock exposes an MCP server over **stdio**:
+
+```bash
+knock serve --repo /path/to/repo [--repo /path/to/other] [--no-refresh]
+```
+
+- `--repo` can be repeated. The server only answers for the repositories listed. With one repository, the `repository` tool argument is optional.
+- At start-up the server begins serving immediately and runs an incremental refresh in the background (`--no-refresh` skips it). During that refresh, freshness reports `indexing`.
+- Logs are JSON lines on stderr (stdout carries the protocol). Set `KNOCK_LOG_LEVEL=DEBUG` for more.
+- Set `KNOCK_HOME` to use a different data directory.
+
+## Compatibility status
+
+| client | status |
+|---|---|
+| MCP Python SDK `Client` (in-process and stdio subprocess) | tested in `tests/test_mcp.py` |
+| Claude Code 2.1.267 (macOS) | `claude mcp add` + `claude mcp get`: server launched, status Connected; in a `claude -p` session the server reported `connected` and all 8 tools were listed (`mcp__knock__*`). **A model calling the tools has not yet been verified.** That run stopped at CLI authentication before any request. |
+| Cursor, Windsurf, VS Code, Claude Desktop, others | should work with any stdio MCP client; **untested** |
+
+## Claude Code
+
+From the repository you want to work on:
+
+```bash
+claude mcp add knock -- /absolute/path/to/knock/.venv/bin/knock serve --repo .
+```
+
+Or commit a project-scoped `.mcp.json` (each user needs `knock` on their `PATH`):
+
+```json
+{
+  "mcpServers": {
+    "knock": { "command": "knock", "args": ["serve", "--repo", "."] }
+  }
+}
+```
+
+Optionally, tell the agent when to use it, for example in `CLAUDE.md`:
+
+```markdown
+Use the knock MCP tools before exploring the repository: call get_context with the task first, verify details
+with get_source before editing, and record reusable findings (root causes, non-obvious workflows, decisions) with
+record_knowledge, citing the files that support them.
+```
+
+## Other stdio MCP clients
+
+Most clients accept the same shape:
+
+```json
+{
+  "mcpServers": {
+    "knock": {
+      "command": "/absolute/path/to/knock/.venv/bin/knock",
+      "args": ["serve", "--repo", "/absolute/path/to/repo"]
+    }
+  }
+}
+```
+
+## Tool reference
+
+All tools return structured content plus the same data as compact JSON text. Every read response includes `freshness` (`fresh`, `stale`, `indexing`, `incomplete` or `never_indexed`, plus revisions). Every knowledge item includes `sources` (path, lines, and an `evidence` warning when the source changed) and `provenance`.
+
+| tool | arguments | notes |
+|---|---|---|
+| `get_context` | `task`, `paths?`, `max_chars?` (1,000–60,000; default 8,000) | knowledge, `symbols`, `files_to_inspect`, `recent_changes`, `gaps`, `guidance` |
+| `search_knowledge` | `query`, `categories?`, `path_prefix?`, `include_inactive?`, `limit?` (≤25), `max_chars?` | `omitted_results`, `notes` (unmatched terms, collapsed duplicates, stale warnings) |
+| `get_knowledge` | `knowledge_id`, `include_evidence?` | full item, all sources with hashes, links, optional excerpts |
+| `get_source` | `path`, `start_line?`, `end_line?`, `symbol?` | ≤200 lines; `changed_since_index`, `truncated`/`next_start_line`, `redactions` |
+| `record_knowledge` | `category`, `content`, `title?`, `rationale?`, `sources?` [`{path,start_line?,end_line?}`], `entities?`, `confidence?`, `supersedes?` | returns `outcome` `created`/`deduplicated`, `possible_conflicts`, `superseded` |
+| `update_knowledge_status` | `knowledge_id`, `action` `verify`/`invalidate`, `reason?` | verify only applies to agent-recorded items |
+| `get_repository_status` | – | freshness, counts, recent runs, cache stats, usage counters |
+| `refresh_repository` | `full?` | change counts, knowledge changes, duration, `model_calls: 0` |
+
+Read tools are annotated `readOnlyHint: true`. Mutating tools are annotated `readOnlyHint: false, destructiveHint: false`. Errors come back as tool errors with a plain message, never a traceback.
+
+## Good agent habits
+
+- Start with `get_context`. Open only the files it suggests, and only the lines you need.
+- Treat `stale` items and `freshness.state != "fresh"` as hints that need verifying. Call `refresh_repository` after editing files if you'll query again.
+- Record one fact per item. Cite sources. Never record secrets, speculation or temporary state.
+- When an item turns out to be wrong, `update_knowledge_status(..., "invalidate", reason)` it, or `record_knowledge(..., supersedes=[id])` with the correction.
