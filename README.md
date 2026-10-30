@@ -12,9 +12,9 @@
 ![100% local](https://img.shields.io/badge/runs-100%25%20local-2ea44f)
 ![No API key needed](https://img.shields.io/badge/API%20key-not%20needed-2ea44f)
 
-<img src="assets/demo.svg" alt="knock indexing Flask and answering a question with file:line references" width="100%">
+<img src="assets/demo.svg" alt="A Claude Code session where Claude calls knock's get_context first, reads only the relevant lines of src/flask/sessions.py, and answers in 8 turns" width="100%">
 
-<sub>What happens under the hood, shown on <a href="https://github.com/pallets/flask">Flask</a> 3.1.2 (real output, trimmed). Day to day, your agent runs this for you; see <a href="#-getting-started">Getting started</a>.</sub>
+<sub>A real Claude Code session on <a href="https://github.com/pallets/flask">Flask</a> 3.1.2, abridged (two shell commands collapsed into one line). Claude asked knock first, then read only the lines it needed.</sub>
 
 </div>
 
@@ -218,7 +218,7 @@ No. Indexing and search are fully deterministic and local. The only thing that u
 <details>
 <summary><b>Which agents work with it?</b></summary>
 
-Any agent that supports MCP over stdio. Verified so far: the official MCP Python SDK client (all tools), and Claude Code (connects and discovers all 8 tools). Cursor, Windsurf and others should work but are untested. Setup: [docs/agents.md](docs/agents.md).
+Any agent that supports MCP over stdio. Verified: **Claude Code** (the session at the top of this page is a real recording of Claude using knock's tools) and the official MCP Python SDK client (all 8 tools, in the test suite). Cursor, Windsurf and others should work but are untested. Setup: [docs/agents.md](docs/agents.md).
 </details>
 
 <details>

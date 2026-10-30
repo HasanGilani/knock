@@ -16,7 +16,7 @@ knock serve --repo /path/to/repo [--repo /path/to/other] [--no-refresh]
 | client | status |
 |---|---|
 | MCP Python SDK `Client` (in-process and stdio subprocess) | tested in `tests/test_mcp.py` |
-| Claude Code 2.1.267 (macOS) | `claude mcp add` + `claude mcp get`: server launched, status Connected; in a `claude -p` session the server reported `connected` and all 8 tools were listed (`mcp__knock__*`). **A model calling the tools has not yet been verified.** That run stopped at CLI authentication before any request. |
+| Claude Code 2.1.267 (macOS) | **tested end to end**: `claude mcp add` connects, and in a real `claude -p` session (model `claude-sonnet-5`, Flask 3.1.2) Claude called `get_context` first, then `get_source` twice, and answered correctly in 8 turns. The README demo shows this session. `record_knowledge` was available but not used in that run. |
 | Cursor, Windsurf, VS Code, Claude Desktop, others | should work with any stdio MCP client; **untested** |
 
 ## Claude Code

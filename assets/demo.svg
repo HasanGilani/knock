@@ -1,57 +1,72 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 452" width="860" height="452" role="img" aria-label="Terminal demo: knock indexes Flask in 461 ms, re-indexes in 30 ms, then answers a question with file and line references">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 548" width="860" height="548" role="img" aria-label="A real Claude Code session: Claude asks knock for context first, reads only the relevant lines of src/flask/sessions.py, and answers in 8 turns without opening a whole file">
   <style>
-    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 13.5px; white-space: pre; }
-    .p { fill: #7ee787; } .c { fill: #e6edf3; } .o { fill: #8b949e; } .id { fill: #d2a8ff; }
-    .cat { fill: #79c0ff; } .path { fill: #ffa657; } .ok { fill: #7ee787; } .hi { fill: #f2cc60; } .cm { fill: #6e7681; }
+    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 13px; white-space: pre; }
+    .w { fill: #e6edf3; } .g { fill: #8b949e; } .d { fill: #6e7681; } .or { fill: #d97757; } .ok { fill: #3fb950; }
+    .tool { fill: #e6edf3; font-weight: 700; } .path { fill: #ffa657; } .hi { fill: #f2cc60; } .b { font-weight: 700; }
   </style>
-  <rect x="0.5" y="0.5" width="859" height="451" rx="12" fill="#0d1117" stroke="#30363d"/>
+  <rect x="0.5" y="0.5" width="859" height="547" rx="12" fill="#0d1117" stroke="#30363d"/>
   <circle cx="22" cy="20" r="6" fill="#ff5f57"/><circle cx="42" cy="20" r="6" fill="#febc2e"/><circle cx="62" cy="20" r="6" fill="#28c840"/>
-  <text x="430" y="25" text-anchor="middle" class="o">~/code/flask</text>
+  <text x="430" y="25" text-anchor="middle" class="g">claude — ~/code/flask</text>
   <line x1="0" y1="40" x2="860" y2="40" stroke="#21262d"/>
 
-  <!-- master clock: everything restarts every 15 s -->
-  <rect width="0" height="0"><animate id="t" attributeName="width" from="0" to="0" dur="15s" begin="0s;t.end"/></rect>
+  <!-- master clock: restart every 18 s -->
+  <rect width="0" height="0"><animate id="t" attributeName="width" from="0" to="0" dur="18s" begin="0s;t.end"/></rect>
 
+  <!-- welcome box -->
+  <rect x="20" y="52" width="820" height="54" rx="6" fill="none" stroke="#d97757"/>
+  <text x="36" y="74"><tspan class="or b">✻ Claude Code</tspan></text>
+  <text x="36" y="95" class="g">cwd: ~/code/flask   ·   MCP: knock <tspan class="ok">✔ connected</tspan></text>
+
+  <!-- prompt (typed) -->
   <defs>
-    <clipPath id="k1"><rect x="0" y="58" height="24" width="0"><set attributeName="width" to="0" begin="t.begin"/><animate attributeName="width" from="0" to="860" dur="0.8s" begin="t.begin+0.4s" fill="freeze"/></rect></clipPath>
-    <clipPath id="k2"><rect x="0" y="142" height="24" width="0"><set attributeName="width" to="0" begin="t.begin"/><animate attributeName="width" from="0" to="860" dur="0.8s" begin="t.begin+2.6s" fill="freeze"/></rect></clipPath>
-    <clipPath id="k3"><rect x="0" y="202" height="24" width="0"><set attributeName="width" to="0" begin="t.begin"/><animate attributeName="width" from="0" to="860" dur="1.4s" begin="t.begin+4.4s" fill="freeze"/></rect></clipPath>
+    <clipPath id="typed"><rect x="0" y="118" height="64" width="0"><set attributeName="width" to="0" begin="t.begin"/><animate attributeName="width" from="0" to="860" dur="1.6s" begin="t.begin+0.4s" fill="freeze"/></rect></clipPath>
   </defs>
-
-  <!-- 1. first index -->
-  <text x="24" y="74" clip-path="url(#k1)"><tspan class="p">$ </tspan><tspan class="c">knock index .</tspan></text>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+1.5s"/>
-    <text x="24" y="98" class="o">flask: completed in <tspan class="hi">461 ms</tspan> at 2c1b30d0503c</text>
-    <text x="24" y="122" class="o">  files: 196 added · knowledge: 548 items · <tspan class="ok">0 model calls</tspan></text>
+  <rect x="20" y="118" width="820" height="62" rx="6" fill="#161b22" stroke="#30363d"/>
+  <g clip-path="url(#typed)">
+    <text x="36" y="143"><tspan class="g">&gt; </tspan><tspan class="w">Sessions signed with an old key in SECRET_KEY_FALLBACKS get rejected after we rotate</tspan></text>
+    <text x="36" y="165" class="w">  SECRET_KEY. Where is the fallback key handling, and what should I check?</text>
   </g>
 
-  <!-- 2. re-index, nothing changed -->
-  <text x="24" y="158" clip-path="url(#k2)"><tspan class="p">$ </tspan><tspan class="c">knock index .</tspan><tspan class="cm">   # again, nothing changed</tspan></text>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+3.6s"/>
-    <text x="24" y="182" class="o">flask: completed in <tspan class="hi">30 ms</tspan> · 196 unchanged, <tspan class="ok">0 reprocessed</tspan></text>
+  <!-- 1. knock first -->
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.5s"/>
+    <text x="24" y="208"><tspan class="ok">⏺ </tspan><tspan class="tool">knock - get_context</tspan><tspan class="g"> (MCP)(task: "Session cookie signing rejects tokens signed with old…")</tspan></text>
+  </g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+3.3s"/>
+    <text x="24" y="230"><tspan class="d">  ⎿  </tspan><tspan class="path">sessions.py:317</tspan><tspan class="w"> get_signing_serializer · </tspan><tspan class="hi">fb54159861</tspan><tspan class="w"> "fix key list ordering" · </tspan><tspan class="ok">fresh</tspan><tspan class="d"> · 70 ms</tspan></text>
   </g>
 
-  <!-- 3. ask a question -->
-  <text x="24" y="218" clip-path="url(#k3)"><tspan class="p">$ </tspan><tspan class="c">knock context "sessions signed with SECRET_KEY_FALLBACKS are rejected"</tspan></text>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+6.2s"/>
-    <text x="24" y="246"><tspan class="id">k_5de6c6039b2d</tspan><tspan class="cat">  debugging </tspan><tspan class="c"> Fix commit fb54159861: secret key rotation: fix key list ordering</tspan></text>
+  <!-- 2. read only the relevant lines -->
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.2s"/>
+    <text x="24" y="256"><tspan class="ok">⏺ </tspan><tspan class="tool">knock - get_source</tspan><tspan class="g"> (MCP)(path: "src/flask/sessions.py", start_line: 290, end_line: 345)</tspan></text>
   </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+6.7s"/>
-    <text x="24" y="274" class="o">symbols:</text>
-    <text x="24" y="298"><tspan class="path">  src/flask/sessions.py:317</tspan><tspan class="o">  method </tspan><tspan class="c">SecureCookieSessionInterface.get_signing_serializer</tspan></text>
-    <text x="24" y="322"><tspan class="path">  tests/test_basic.py:374</tspan><tspan class="o">    function </tspan><tspan class="c">test_session_secret_key_fallbacks</tspan></text>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.8s"/>
+    <text x="24" y="278"><tspan class="d">  ⎿  </tspan><tspan class="w">56 lines</tspan><tspan class="g"> of a 399-line file</tspan></text>
   </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+7.3s"/>
-    <text x="24" y="350" class="o">files to inspect:</text>
-    <text x="24" y="374" class="path">  src/flask/sessions.py</text>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.5s"/>
+    <text x="24" y="304"><tspan class="ok">⏺ </tspan><tspan class="tool">Bash</tspan><tspan class="g">(git show fb54159861 -- src/flask/sessions.py CHANGES.rst | head -150)</tspan></text>
+    <text x="24" y="326" class="d">  ⎿  … +2 more read-only commands (grep docs/config.rst, git log sessions.py)</text>
   </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+7.9s"/>
-    <text x="24" y="402"><tspan class="o">freshness: </tspan><tspan class="ok">fresh</tspan><tspan class="o">  (7,725 chars, instead of reading whole files)</tspan></text>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+6.3s"/>
+    <text x="24" y="352"><tspan class="ok">⏺ </tspan><tspan class="tool">knock - get_source</tspan><tspan class="g"> (MCP)(path: "src/flask/sessions.py", start_line: 337, end_line: 360)</tspan></text>
   </g>
 
-  <!-- idle prompt with blinking cursor -->
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+8.6s"/>
-    <text x="24" y="432"><tspan class="p">$ </tspan></text>
-    <rect x="42" y="420" width="8" height="15" fill="#e6edf3"><animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.5;0.5;1" dur="1s" repeatCount="indefinite"/></rect>
+  <!-- 3. the answer -->
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+7.4s"/>
+    <text x="24" y="382"><tspan class="w">⏺ This repo already has the fix for exactly this bug (commit </tspan><tspan class="hi">fb54159861</tspan><tspan class="w">, "secret key</tspan></text>
+    <text x="24" y="403" class="w">  rotation: fix key list ordering", included since Flask 3.1.1).</text>
+  </g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+8.1s"/>
+    <text x="24" y="429"><tspan class="w b">  Where it lives: </tspan><tspan class="w">SecureCookieSessionInterface.get_signing_serializer in</tspan></text>
+    <text x="24" y="450"><tspan class="path">  src/flask/sessions.py:317-335</tspan><tspan class="w">, called from open_session (sessions.py:337-349).</tspan></text>
+  </g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+8.8s"/>
+    <text x="24" y="476"><tspan class="w b">  What to check: </tspan><tspan class="w">1. Flask ≥ 3.1.1   2. SECRET_KEY_FALLBACKS is a list, not a raw</tspan></text>
+    <text x="24" y="497" class="w">  string from an env var   3. the old key's exact value and encoding   …</text>
+  </g>
+
+  <!-- footer -->
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+9.8s"/>
+    <line x1="20" y1="512" x2="840" y2="512" stroke="#21262d"/>
+    <text x="24" y="533" class="g">real session · 8 turns · 51 s · <tspan class="ok">0 whole files read</tspan> · knock asked first, answered in 70 ms</text>
   </g>
 </svg>
