@@ -27,7 +27,7 @@ Every new chat with a coding agent starts with amnesia. To answer *"where is X?"
 | | 😩 Without knock | 😎 With knock |
 |---|---|---|
 | **First move** | `grep` around, open 3 whole files | one `get_context` call |
-| **Text the agent reads** | ~27,000–118,000 characters per question | ~7,600 characters per question |
+| **Text the agent reads** | ~27,000–118,000 characters per question | ~4,300 characters per question |
 | **Finds "why did we do it this way?"** | only if it opens the right doc | decisions and their rationale come back with the answer |
 | **Remembers yesterday's bug hunt** | ❌ | ✅ agents save findings with `record_knowledge` |
 | **Knows when its notes are outdated** | — | ✅ every answer says `fresh` or `stale` |
@@ -174,14 +174,14 @@ Measured with a reproducible benchmark: 12 engineering tasks per repo, covering 
 |---|:---:|---:|---:|
 | 🐢 grep + read 3 files | 9 / 12 | 1,215,570 | 72 |
 | 🐇 targeted grep + read snippets | 7 / 12 | 328,206 | 60 |
-| 🚪 **knock** | **10 / 12** | **122,506** | **17** |
+| 🚪 **knock** | **10 / 12** | **88,962** | **17** |
 
 <details>
 <summary><b>More numbers, and the fine print</b></summary>
 
 <br>
 
-- **Flask** (used during development, so optimistic): knock 12/12 with 107K chars, baselines 7/12 with 2.1M and 247K chars.
+- **Flask** (used during development, so optimistic): knock 12/12 with 92K chars, baselines 7/12 with 2.1M and 247K chars.
 - **Speed:** a ~200-file repo indexes in 0.3–0.6 s; re-indexing with no changes takes ~30 ms.
 - **What this measures:** whether the facts *reached* the agent, not whether the agent then solved the task. The baselines are simulations of agent behaviour.
 - **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.

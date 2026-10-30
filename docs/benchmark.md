@@ -36,7 +36,9 @@ python benchmarks/retrieval_bench.py --tasks benchmarks/tasks/fastapi-template.j
 
 Outputs go to `benchmarks/results/retrieval_<repo>.{md,json}`.
 
-### Results (run on 2026-10-29, macOS arm64, Python 3.10, knock 0.1.0)
+### Results (re-run on 2026-10-31 after the fixes below; macOS arm64, Python 3.10, knock 0.1.0)
+
+Before those fixes, knock scored the same tasks but returned more text: 122,506 characters on the held-out set and 107,164 on Flask.
 
 **Held-out: full-stack-fastapi-template 0.9.0**
 
@@ -44,13 +46,13 @@ Outputs go to `benchmarks/results/retrieval_<repo>.{md,json}`.
 |---|---|---|---|---|
 | A: grep + read 3 files | 9/12 | 1,215,570 | 117,924 | 72 |
 | B: targeted grep + 2 windows | 7/12 | 328,206 | 27,086 | 60 |
-| knock | 10/12 | 122,506 | 7,612 | 17 |
+| knock | 10/12 | 88,962 | 4,311 | 17 |
 | oracle single file | — | 160,947 | — | — |
 
 knock's held-out misses:
 
 - `arch-routers`: `backend/app/api/main.py` defines `api_router = APIRouter()` at module level. knock doesn't index module-level variables (only UPPER_CASE constants), and the file has no docstring, so nothing pointed to it.
-- `convention-lint`: the task says "linters, type checkers and formatters". Porter-stemmed FTS turns `linters` into `linter`, which doesn't match the stored `lint`, so the ruff/mypy/Biome items were never retrieved.
+- `convention-lint`: the task says "linters, type checkers and formatters". Porter-stemmed FTS turns `linters` into `linter`, which doesn't match the stored `lint`, so the ruff/mypy/Biome items were never retrieved. (A synonym for this was deliberately *not* added, so the held-out set stays untuned.)
 
 Baseline A missed 3 tasks (`arch-routers`, `locate-jwt`, `bug-first-start`), and baseline B missed 5.
 
@@ -60,12 +62,12 @@ Baseline A missed 3 tasks (`arch-routers`, `locate-jwt`, `bug-first-start`), and
 |---|---|---|---|---|
 | A: grep + read 3 files | 7/12 | 2,141,848 | 180,400 | 72 |
 | B: targeted grep + 2 windows | 7/12 | 246,604 | 21,842 | 60 |
-| knock | 12/12 | 107,164 | 7,626 | 14 |
+| knock | 12/12 | 91,830 | 7,555 | 15 |
 | oracle single file | — | 244,044 | — | — |
 
-**Ingestion and maintenance (both repositories, ~196 eligible files each):** a cold index took 310–580 ms, and a no-op refresh took about 30 ms with 0 files reprocessed. Extraction makes 0 model calls. The database was 5–6 MB (FTS indexes dominate).
+**Ingestion and maintenance (both repositories, ~196 eligible files each):** a cold index took 330–640 ms, and a no-op refresh took about 30 ms with 0 files reprocessed. Extraction makes 0 model calls. The database was 5–6 MB (FTS indexes dominate).
 
-**Cache:** on Flask, `get_context` had a median latency of 63 ms uncached and 22 ms when repeated. All 12 repeats were served from the application cache.
+**Cache:** on Flask, `get_context` had a median latency of 72 ms uncached and 22 ms when repeated. All 12 repeats were served from the application cache.
 
 **Staleness scenario** (both sets): a documented command is edited in a copy of the repository without re-indexing. Before refresh, knock still returned the old command but marked the response `freshness: stale` and annotated the cited source as "file modified in working tree since last index". `refresh_repository` reprocessed 1 file (195 unchanged, about 35 ms). After that, the new text was served and the old text wasn't.
 
@@ -76,6 +78,23 @@ Baseline A missed 3 tasks (`arch-routers`, `locate-jwt`, `bug-first-start`), and
 - **Development-set bias:** the Flask results reflect tuning. Only the held-out results are reasonable evidence, and 12 tasks on one repository is a small sample.
 - **Small repositories** (about 200 files). Behaviour on large monorepos hasn't been measured.
 - **Characters aren't money.** Agent cost also includes system prompts, tool schemas (knock adds four tool definitions), reasoning, output, and prompt caching. Reading fewer characters doesn't translate one-to-one into a saving.
+
+## Claude Code recordings (side by side)
+
+The same two-day task, recorded in real Claude Code sessions on Flask 3.1.2 (model `claude-sonnet-5`, one run per condition, 2026-10-31). Monday: *"Users get logged out every time we rotate SECRET_KEY, even though the old key is in SECRET_KEY_FALLBACKS. Why?"* Tuesday (new session): *"Add a debug log message when a session cookie can't be verified."* The "with knock" condition had knock connected plus the one-line `CLAUDE.md` tip.
+
+| | without knock | with knock (knock 0.1.0 before fixes) |
+|---|---|---|
+| Monday | 79 s · 10 tool calls · $0.21 | 164 s · 25 tool calls · $0.39 |
+| Tuesday | 26 s · 7 tool calls · $0.12 | 33 s · 8 tool calls · $0.13 |
+
+Both conditions answered correctly and made the same one-line change. **knock did not help in this recording.** The transcripts showed three knock problems, since fixed:
+
+1. Commit messages were cut to their subject line. The fix commit's body explained the cause exactly, but knock only kept *"secret key rotation: fix key list ordering"*, so Claude went looking for a library's source (and was blocked 10 times). knock now keeps commit bodies, minus trailers and email addresses, as the rationale of fix-commit notes.
+2. `get_context` filled its budget with off-topic notes (6 of 8 on Monday). Query words are now weighted by rarity in the repository, a few generic code synonyms are applied, and results scoring below 60% of the best match are dropped.
+3. Code could only be found by name. Python functions now also record what they call, catch, raise and read (e.g. `open_session` catches `BadSignature`), so Tuesday's target function ranks second instead of not appearing.
+
+Also visible: Claude without knock hit the same blocked commands (3 times), so single runs are noisy. The recordings have **not yet been repeated** with the fixed version. A fair re-test should use several runs per condition and, ideally, a codebase Claude doesn't already know.
 
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 

@@ -11,13 +11,13 @@
   },
   "task_set_role": "development set: knock's extractors and ranking were adjusted while looking at results on this repository, so these results are optimistic",
   "ingestion": {
-    "cold_index_ms": 579,
+    "cold_index_ms": 642,
     "noop_refresh_ms": 30,
     "files_indexed": 196,
     "files_reprocessed_on_noop": 0,
     "knowledge_items_active": 548,
     "symbols": 1265,
-    "database_bytes": 6258792,
+    "database_bytes": 6357528,
     "model_calls": 0
   },
   "baseline": {
@@ -39,22 +39,22 @@
   "knock": {
     "passed": 12,
     "tasks": 12,
-    "total_chars": 107164,
-    "median_chars": 7626.5,
-    "est_total_tokens": 26791,
-    "total_tool_calls": 14
+    "total_chars": 91830,
+    "median_chars": 7555.0,
+    "est_total_tokens": 22958,
+    "total_tool_calls": 15
   },
   "oracle_total_chars": 244044,
   "cache": {
-    "repeat_context_ms_median": 23.15,
-    "first_context_ms_median": 63.7,
+    "repeat_context_ms_median": 21.9,
+    "first_context_ms_median": 71.7,
     "repeat_hits": 12,
     "metrics": {
       "hits": 12,
       "misses": 12,
       "hit_rate": 0.5,
       "entries": 12,
-      "bytes": 37288,
+      "bytes": 34314,
       "max_entries": 1000,
       "max_bytes": 16777216
     }
@@ -77,7 +77,7 @@
       "files_unchanged": 195,
       "knowledge_updated": 1,
       "knowledge_invalidated": 0,
-      "duration_ms": 36
+      "duration_ms": 39
     },
     "after_refresh": {
       "serves_new_text": true,
@@ -103,7 +103,7 @@
           "context",
           "application"
         ],
-        "latency_ms": 4.9
+        "latency_ms": 5.1
       },
       "baseline_targeted": {
         "pass": false,
@@ -121,16 +121,16 @@
           "context",
           "application"
         ],
-        "latency_ms": 19.9
+        "latency_ms": 20.5
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7289,
+        "chars": 5042,
         "tool_calls": 1,
-        "context_chars": 7289,
+        "context_chars": 5042,
         "followed_sources": [],
-        "latency_ms": 51.4,
+        "latency_ms": 61.1,
         "freshness": "fresh"
       },
       "oracle": {
@@ -156,7 +156,7 @@
           "matching",
           "dispatch"
         ],
-        "latency_ms": 6.6
+        "latency_ms": 6.5
       },
       "baseline_targeted": {
         "pass": true,
@@ -172,16 +172,16 @@
           "matching",
           "dispatch"
         ],
-        "latency_ms": 18.2
+        "latency_ms": 18.8
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7623,
+        "chars": 6442,
         "tool_calls": 1,
-        "context_chars": 7623,
+        "context_chars": 6442,
         "followed_sources": [],
-        "latency_ms": 66.8,
+        "latency_ms": 72.7,
         "freshness": "fresh"
       },
       "oracle": {
@@ -207,7 +207,7 @@
           "routes",
           "handlers"
         ],
-        "latency_ms": 5.9
+        "latency_ms": 6.1
       },
       "baseline_targeted": {
         "pass": true,
@@ -223,16 +223,16 @@
           "routes",
           "handlers"
         ],
-        "latency_ms": 17.2
+        "latency_ms": 17.3
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7239,
+        "chars": 7788,
         "tool_calls": 1,
-        "context_chars": 7239,
+        "context_chars": 7788,
         "followed_sources": [],
-        "latency_ms": 54.0,
+        "latency_ms": 58.8,
         "freshness": "fresh"
       },
       "oracle": {
@@ -258,7 +258,7 @@
           "configuration",
           "values"
         ],
-        "latency_ms": 5.6
+        "latency_ms": 5.4
       },
       "baseline_targeted": {
         "pass": false,
@@ -276,16 +276,16 @@
           "configuration",
           "values"
         ],
-        "latency_ms": 17.8
+        "latency_ms": 17.9
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7814,
+        "chars": 7569,
         "tool_calls": 1,
-        "context_chars": 7814,
+        "context_chars": 7569,
         "followed_sources": [],
-        "latency_ms": 54.9,
+        "latency_ms": 70.7,
         "freshness": "fresh"
       },
       "oracle": {
@@ -313,7 +313,7 @@
           "production",
           "give"
         ],
-        "latency_ms": 8.3
+        "latency_ms": 8.5
       },
       "baseline_targeted": {
         "pass": true,
@@ -329,16 +329,16 @@
           "production",
           "give"
         ],
-        "latency_ms": 18.5
+        "latency_ms": 18.2
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7630,
+        "chars": 7541,
         "tool_calls": 1,
-        "context_chars": 7630,
+        "context_chars": 7541,
         "followed_sources": [],
-        "latency_ms": 63.5,
+        "latency_ms": 65.0,
         "freshness": "fresh"
       },
       "oracle": {
@@ -364,7 +364,7 @@
           "environments",
           "tox"
         ],
-        "latency_ms": 7.8
+        "latency_ms": 8.0
       },
       "baseline_targeted": {
         "pass": true,
@@ -380,16 +380,16 @@
           "environments",
           "tox"
         ],
-        "latency_ms": 17.5
+        "latency_ms": 17.6
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7259,
+        "chars": 3111,
         "tool_calls": 1,
-        "context_chars": 7259,
+        "context_chars": 3111,
         "followed_sources": [],
-        "latency_ms": 56.8,
+        "latency_ms": 55.2,
         "freshness": "fresh"
       },
       "oracle": {
@@ -415,7 +415,7 @@
           "hit",
           "debugger"
         ],
-        "latency_ms": 10.5
+        "latency_ms": 9.8
       },
       "baseline_targeted": {
         "pass": true,
@@ -431,16 +431,16 @@
           "hit",
           "debugger"
         ],
-        "latency_ms": 19.0
+        "latency_ms": 18.7
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7318,
+        "chars": 7865,
         "tool_calls": 1,
-        "context_chars": 7318,
+        "context_chars": 7865,
         "followed_sources": [],
-        "latency_ms": 73.3,
+        "latency_ms": 74.4,
         "freshness": "fresh"
       },
       "oracle": {
@@ -466,7 +466,7 @@
           "secret_key_fallbacks",
           "fallbacks"
         ],
-        "latency_ms": 10.3
+        "latency_ms": 10.7
       },
       "baseline_targeted": {
         "pass": true,
@@ -482,16 +482,16 @@
           "secret_key_fallbacks",
           "fallbacks"
         ],
-        "latency_ms": 18.7
+        "latency_ms": 18.8
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7914,
+        "chars": 4918,
         "tool_calls": 1,
-        "context_chars": 7914,
+        "context_chars": 4918,
         "followed_sources": [],
-        "latency_ms": 80.7,
+        "latency_ms": 82.2,
         "freshness": "fresh"
       },
       "oracle": {
@@ -519,7 +519,7 @@
           "explicit",
           "creating"
         ],
-        "latency_ms": 8.2
+        "latency_ms": 8.3
       },
       "baseline_targeted": {
         "pass": true,
@@ -535,18 +535,18 @@
           "explicit",
           "creating"
         ],
-        "latency_ms": 16.9
+        "latency_ms": 17.1
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 18781,
+        "chars": 14081,
         "tool_calls": 2,
-        "context_chars": 7771,
+        "context_chars": 3071,
         "followed_sources": [
           "docs/design.rst"
         ],
-        "latency_ms": 71.0,
+        "latency_ms": 77.9,
         "freshness": "fresh"
       },
       "oracle": {
@@ -575,7 +575,7 @@
           "proxies",
           "passing"
         ],
-        "latency_ms": 11.9
+        "latency_ms": 12.5
       },
       "baseline_targeted": {
         "pass": false,
@@ -594,16 +594,16 @@
           "proxies",
           "passing"
         ],
-        "latency_ms": 18.1
+        "latency_ms": 18.0
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7198,
+        "chars": 7733,
         "tool_calls": 1,
-        "context_chars": 7198,
+        "context_chars": 7733,
         "followed_sources": [],
-        "latency_ms": 73.2,
+        "latency_ms": 82.8,
         "freshness": "fresh"
       },
       "oracle": {
@@ -631,7 +631,7 @@
           "live",
           "tools"
         ],
-        "latency_ms": 12.8
+        "latency_ms": 12.9
       },
       "baseline_targeted": {
         "pass": false,
@@ -649,16 +649,16 @@
           "live",
           "tools"
         ],
-        "latency_ms": 19.9
+        "latency_ms": 20.1
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 7651,
+        "chars": 6132,
         "tool_calls": 1,
-        "context_chars": 7651,
+        "context_chars": 6132,
         "followed_sources": [],
-        "latency_ms": 63.9,
+        "latency_ms": 81.4,
         "freshness": "fresh"
       },
       "oracle": {
@@ -687,7 +687,7 @@
           "enforce",
           "style"
         ],
-        "latency_ms": 6.3
+        "latency_ms": 6.1
       },
       "baseline_targeted": {
         "pass": false,
@@ -706,18 +706,19 @@
           "enforce",
           "style"
         ],
-        "latency_ms": 14.7
+        "latency_ms": 15.0
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 13448,
-        "tool_calls": 2,
-        "context_chars": 7784,
+        "chars": 13608,
+        "tool_calls": 3,
+        "context_chars": 5925,
         "followed_sources": [
+          "README.md",
           "pyproject.toml"
         ],
-        "latency_ms": 43.3,
+        "latency_ms": 39.8,
         "freshness": "fresh"
       },
       "oracle": {

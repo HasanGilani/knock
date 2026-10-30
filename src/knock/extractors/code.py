@@ -49,14 +49,14 @@ def _python(path: str, text: str) -> FileExtraction:
             out.symbols.append(Symbol(node.name, "class", node.lineno, f"class {node.name}({bases})" if bases else f"class {node.name}"))
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and not _dunder_noise(item.name):
-                    out.symbols.append(Symbol(f"{node.name}.{item.name}", "method", item.lineno, _py_sig(item)))
+                    out.symbols.append(Symbol(f"{node.name}.{item.name}", "method", item.lineno, _py_sig(item), _py_refs(item)))
                 elif isinstance(item, (ast.Assign, ast.AnnAssign)):
                     targets = item.targets if isinstance(item, ast.Assign) else [item.target]
                     for tgt in targets:
                         if isinstance(tgt, ast.Name) and not tgt.id.startswith("__"):
                             out.symbols.append(Symbol(f"{node.name}.{tgt.id}", "attribute", item.lineno, f"{node.name}.{tgt.id}"))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            out.symbols.append(Symbol(node.name, "function", node.lineno, _py_sig(node)))
+            out.symbols.append(Symbol(node.name, "function", node.lineno, _py_sig(node), _py_refs(node)))
         elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
             name = node.targets[0].id
             if name.isupper() and len(name) > 2:
@@ -69,6 +69,49 @@ def _python(path: str, text: str) -> FileExtraction:
             method = m.group(1).upper() if m.group(1) not in ("route", "api_route") else "ROUTE"
             out.symbols.append(Symbol(f"{method} {m.group(2)}", "route", lineno, line.strip()[:160]))
     return out
+
+
+_REF_NOISE = frozenset("""self cls super len str int float bool list dict set tuple isinstance getattr setattr hasattr
+    print range enumerate zip map filter sorted min max any all repr type iter next append extend update pop items
+    keys values format join split strip startswith endswith lower upper replace encode decode copy""".split())
+_CONFIG_KEY = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]{2,60}$")
+MAX_REFS = 40
+
+
+def _py_refs(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
+    """Names a function's body depends on: calls, attributes, caught/raised exceptions, string keys.
+
+    This lets a search for what code *does* ("where is a bad signature handled", "what reads
+    SECRET_KEY_FALLBACKS") find a function whose own name says nothing about it.
+    """
+    seen: dict[str, None] = {}
+
+    def add(name: str | None) -> None:
+        if name and name not in _REF_NOISE and not name.startswith("__") and len(seen) < MAX_REFS:
+            seen.setdefault(name, None)
+
+    def names_in(node: ast.AST | None) -> None:
+        if isinstance(node, ast.Name):
+            add(node.id)
+        elif isinstance(node, ast.Attribute):
+            add(node.attr)
+        elif isinstance(node, ast.Tuple):
+            for elt in node.elts:
+                names_in(elt)
+
+    for node in ast.walk(fn):
+        if isinstance(node, ast.ExceptHandler):
+            names_in(node.type)
+        elif isinstance(node, ast.Raise) and node.exc is not None:
+            names_in(node.exc.func if isinstance(node.exc, ast.Call) else node.exc)
+        elif isinstance(node, ast.Call):
+            names_in(node.func)
+        elif isinstance(node, ast.Attribute):
+            add(node.attr)
+        elif isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
+            if _CONFIG_KEY.match(node.slice.value):
+                add(node.slice.value)
+    return list(seen)
 
 
 def _dunder_noise(name: str) -> bool:

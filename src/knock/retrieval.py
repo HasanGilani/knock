@@ -10,6 +10,7 @@ source references so the agent can verify against the original files.
 from __future__ import annotations
 
 import json
+import math
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -17,7 +18,7 @@ from dataclasses import dataclass
 from .extractors import CATEGORIES
 from .extractors.code import is_test_path
 from .knowledge import ACTIVE_STATUSES, ALL_STATUSES, fts_query
-from .util import clean_text, jaccard, normalize_text, term_match, terms
+from .util import clean_text, expand_terms, jaccard, normalize_text, term_match, terms
 
 AUTHORITY = {
     ("extracted", "derived"): 1.0,
@@ -70,7 +71,9 @@ def search(
         if bad:
             raise ValueError(f"unknown categories: {', '.join(bad)} (valid: {', '.join(CATEGORIES)})")
     statuses = ALL_STATUSES if include_inactive else ACTIVE_STATUSES
-    match = fts_query(qterms[:32])
+    expanded = expand_terms(qterms[:32])
+    weights = _term_weights(conn, repo_id, qterms[:32])
+    match = fts_query(list(dict.fromkeys([*qterms[:32], *[x for t in qterms[:32] for x in expanded[t]]])))
     rows: list[sqlite3.Row] = []
     if match:
         sql = f"""SELECT k.*, bm25(knowledge_fts, 3.0, 1.0, 2.0, 1.5) AS bm FROM knowledge_fts f JOIN knowledge k ON k.id = f.kid
@@ -104,15 +107,19 @@ def search(
     ranked: list[Ranked] = []
     matched_terms: set[str] = set()
     qset = set(qterms)
+    total_weight = sum(weights.values()) or 1.0
     for r in rows:
         text_terms = set(terms(" ".join([r["title"], r["content"], r["rationale"] or "", " ".join(json.loads(r["entities"]))])))
         srcs = sources.get(r["id"], [])
         text_terms |= set(terms(" ".join(s["path"] for s in srcs)))
         hit = qset & text_terms
-        # FTS uses stemming and prefixes; count inflected matches (lint/linting, deploy/deployment) too.
+        # FTS uses stemming and prefixes; count inflected matches (deploy/deployment) too.
         hit |= {q for q in qset - hit if any(term_match(q, t) for t in text_terms)}
-        matched_terms |= hit
-        coverage = len(hit) / len(qset) if qset else 0.0
+        syn_hit = {q for q in qset - hit if any(term_match(x, t) for x in expanded.get(q, ()) for t in text_terms)}
+        matched_terms |= hit | syn_hit
+        # Coverage weighs each query word by how rare it is in this repository's knowledge, so filler
+        # ("time", "even", "keep") counts for little and specific words ("SECRET_KEY_FALLBACKS") for a lot.
+        coverage = (sum(weights.get(q, 0.0) for q in hit) + 0.6 * sum(weights.get(q, 0.0) for q in syn_hit)) / total_weight
         rel = (r["bm"] / best_bm) if "bm" in r.keys() and best_bm else 0.5
         score = (0.45 * max(rel, 0.0) + 0.55 * coverage)
         score *= AUTHORITY.get((r["origin"], r["verification"]), 0.8)
@@ -131,6 +138,17 @@ def search(
         ranked.append(Ranked(r, score, srcs))
     ranked.sort(key=lambda x: -x.score)
     diag["unmatched_terms"] = [t for t in qterms if t not in matched_terms]
+    # Return only what is clearly relevant instead of filling the budget: results far below the
+    # best match are dropped (they cost the agent tokens on every later turn and add nothing).
+    if ranked:
+        # Judge relevance only: lifecycle status (stale/superseded) affects order, not whether an item is on topic.
+        def relevance(x: Ranked) -> float:
+            return x.score / STATUS_WEIGHT.get(x.row["status"], 0.5)
+
+        floor = max(relevance(x) for x in ranked) * RELATIVE_CUTOFF
+        kept = [x for x in ranked if relevance(x) >= floor]
+        diag["dropped_low_relevance"] = len(ranked) - len(kept)
+        ranked = kept
 
     # Collapse near-identical items so the budget is not spent on repetition.
     out: list[Ranked] = []
@@ -146,6 +164,23 @@ def search(
             break
     diag["candidates_considered"] = len(rows)
     return out, diag
+
+
+RELATIVE_CUTOFF = 0.6
+
+
+def _term_weights(conn: sqlite3.Connection, repo_id: str, qterms: list[str]) -> dict[str, float]:
+    """Inverse document frequency of each query term among this repository's active knowledge."""
+    n = conn.execute("SELECT COUNT(*) FROM knowledge WHERE repo_id=? AND status IN ('active','stale')", (repo_id,)).fetchone()[0]
+    weights: dict[str, float] = {}
+    for t in qterms:
+        q = fts_query([t])
+        if not q:
+            continue
+        df = conn.execute("SELECT COUNT(*) FROM knowledge_fts WHERE knowledge_fts MATCH ? AND repo_id=?", (q, repo_id)).fetchone()[0]
+        if df:
+            weights[t] = math.log((n + 1) / (df + 0.5))
+    return weights
 
 
 def _is_code(path: str) -> bool:
@@ -265,31 +300,56 @@ def fit_budget(items: list[dict], max_chars: int) -> tuple[list[dict], int]:
 
 
 def search_symbols(conn: sqlite3.Connection, repo_id: str, query: str, limit: int = 10) -> list[dict]:
-    match = fts_query(terms(query)[:24])
+    """Symbols whose name, or what their body calls/catches/reads, matches the query.
+
+    A query term counts 1.5 when it matches the symbol's name, 1.0 when it matches a reference in its
+    body, and 0.6 when only a synonym matches. At most three results come from the same class or module,
+    so one big class cannot crowd out the function that actually does the work.
+    """
+    qterms = terms(query)
+    expanded = expand_terms(qterms)
+    words = list(dict.fromkeys([*qterms[:24], *[s for t in qterms[:24] for s in expanded[t]]]))
+    match = fts_query(words)
     if not match:
         return []
     rows = conn.execute(
-        """SELECT path, name, kind, line, signature, bm25(symbols_fts) AS bm FROM symbols_fts
+        """SELECT path, name, kind, line, signature, refs, bm25(symbols_fts, 2.0, 1.0) AS bm FROM symbols_fts
            WHERE symbols_fts MATCH ? AND repo_id = ? ORDER BY bm LIMIT ?""",
-        (match, repo_id, max(limit * 15, 150)),
+        (match, repo_id, max(limit * 20, 200)),
     ).fetchall()
-    qset = set(terms(query))
     mentions_tests = bool(re.search(r"\btests?\b", query, re.I))
     scored = []
     for r in rows:
         nterms = set(terms(r["name"]))
-        name_hits = {q for q in qset if any(term_match(q, t) for t in nterms)}
-        if not name_hits:
-            continue  # matched only through the file path: not evidence this symbol is relevant
-        path_hits = {q for q in qset - name_hits if any(term_match(q, t) for t in terms(r["path"]))}
-        score = len(name_hits) * 2 + len(path_hits) + 0.2 * len(name_hits) / max(len(nterms), 1)
+        rterms = set(terms(r["refs"] or ""))
+        score, name_hit = 0.0, False
+        for q in qterms:
+            syns = expanded[q]
+            if any(term_match(q, t) for t in nterms):
+                score += 1.5
+                name_hit = True
+            elif any(term_match(q, t) for t in rterms):
+                score += 1.0
+            elif any(term_match(s, t) for s in syns for t in nterms | rterms):
+                score += 0.6
+        if score < 1.0:
+            continue  # matched only through the file path or a lone synonym: not evidence of relevance
         if r["kind"] in ("class", "function", "type", "route", "entrypoint"):
             score *= 1.2
+        if not name_hit:
+            score *= 0.9
         if not mentions_tests and is_test_path(r["path"]):
             score *= 0.3
         scored.append((score, r))
     scored.sort(key=lambda x: (-x[0], x[1]["path"], x[1]["line"]))
-    out = []
-    for _, r in scored[:limit]:
+    out: list[dict] = []
+    per_owner: dict[tuple[str, str], int] = {}
+    for _, r in scored:
+        owner = (r["path"], r["name"].split(".")[0] if "." in r["name"] else "")
+        if per_owner.get(owner, 0) >= 3:
+            continue
+        per_owner[owner] = per_owner.get(owner, 0) + 1
         out.append({"symbol": r["name"], "kind": r["kind"], "path": r["path"], "line": int(r["line"]), "signature": r["signature"]})
+        if len(out) >= limit:
+            break
     return out

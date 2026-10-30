@@ -45,5 +45,5 @@ Repository files, documentation, commit messages, and agent-recorded knowledge a
 
 - Derived statements can quote parts of documentation and configuration (up to a few hundred characters per section). Anyone who can read `~/.knock/knock.db` can read those statements.
 - Redaction is best-effort, as described above.
-- Commit subjects are stored. Author names and emails are not.
+- Commit subjects and message bodies are stored, with `Signed-off-by:`/`Co-authored-by:`-style trailers and any email addresses removed. Author names and emails are not collected.
 - Deleting knowledge: `knock forget <repo> --yes` removes everything stored for that repository. Deleting `$KNOCK_HOME` removes everything.

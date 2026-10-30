@@ -31,7 +31,7 @@ src/knock/
    - Key no longer produced: the evidence row is removed, and an item left with no evidence becomes `invalidated` with a reason.
    - Agent-recorded items that cite the file at a different hash become `stale`.
 5. **Repository-level derivation.** After any change, knock recomputes repository-level items from the index itself: layout, directory summaries, entry points, test layout, observed naming conventions, and a documentation map. They are stored under the pseudo-path `.`.
-6. **Git history.** New commits since the last indexed revision (newest `commit_history_limit`) are stored with their changed files. Fix-like commits ("fix", "bug", "regression", "revert", …) become `debugging` items with `historical` verification. Author identities are not collected.
+6. **Git history.** New commits since the last indexed revision (newest `commit_history_limit`) are stored with their changed files and message body (trailers and email addresses removed). Fix-like commits ("fix", "bug", "regression", "revert", …) become `debugging` items with `historical` verification, carrying the commit body as their rationale. Author identities are not collected. Indexes created before bodies were stored are backfilled on the next refresh.
 7. **Completion.** Only when every file and deletion has been processed is the run marked `completed` and `indexed_revision` advanced. The repository's *generation* counter is incremented, which invalidates its cached query results.
 
 ## Data model
@@ -84,14 +84,17 @@ An explicit invalidation of an extracted item persists until that source section
 
 ## Retrieval and ranking
 
-`score = (0.45·bm25_rel + 0.55·term_coverage) × authority × status_weight × (0.5 + 0.5·confidence) × intent × path_hint × penalties`
+`score = (0.45·bm25_rel + 0.55·weighted_coverage) × authority × status_weight × (0.5 + 0.5·confidence) × intent × path_hint × penalties`
+
+- **weighted_coverage**: the share of the query matched by an item, with each query word weighted by its rarity (inverse document frequency) among the repository's knowledge, so filler words count little and specific identifiers a lot. A match through a synonym from a short generic list (verify↔signature/check, log↔logger, error↔exception, auth↔login, …) counts 0.6.
+- **relevance cutoff**: items whose relevance is below 60% of the best match are dropped instead of filling the budget (`dropped_low_relevance` in diagnostics). Lifecycle status affects order, not this cutoff.
 
 - **intent**: the query is classified with keyword rules ("why/rationale" → decision, "deploy/build/test" → workflow, "bug/error/fix" → debugging, …). Matching categories get ×1.35, and "where/implemented/defined" boosts items whose evidence is code (×1.4).
 - **penalties**: items supported only by test files (×0.6 unless the query mentions tests), or only by example/fixture/benchmark paths (×0.7).
 - Near-identical results (Jaccard ≥ 0.85) are collapsed, and the count is reported.
 - In compact list views, item content is shortened to about 420 characters (`"shortened": true`). `get_knowledge` returns the full text.
 
-`get_context` combines ranked knowledge, symbol hits whose *name* matches the task, a list of files to open (weighted by knowledge rank and symbol hits), recent commits touching those files whose messages share terms with the task, and explicit gaps (query terms that matched nothing, or a missing rationale for a "why" question). Budget shares: files 12%, symbols 15%, commits 7%; knowledge gets the rest.
+`get_context` combines ranked knowledge, symbols matching the task by name or by what their body references (for Python: functions called, exceptions caught or raised, attributes and string keys read; at most three per class/module, and only a file's best symbol counts toward its rank), a list of files to open (weighted by knowledge rank and symbol hits), recent commits touching those files whose messages share terms with the task, and explicit gaps (query terms that matched nothing, or a missing rationale for a "why" question). Budget shares: files 12%, symbols 15%, commits 7%; knowledge gets the rest.
 
 ## Caching
 

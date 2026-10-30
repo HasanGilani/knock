@@ -212,8 +212,11 @@ class Indexer:
             if changed or self._repo_scope_missing(repo.id):
                 with Tx(self.conn):
                     k.add(self._derive_repo_level(repo, revision))
-            if revision and revision != repo.indexed_revision or full:
-                stats["commits_ingested"] = self._ingest_commits(repo, revision, None if full else repo.indexed_revision)
+            backfill = self.conn.execute(
+                "SELECT 1 FROM commits WHERE repo_id=? AND body IS NULL LIMIT 1", (repo.id,)).fetchone() is not None
+            if revision and revision != repo.indexed_revision or full or backfill:
+                since = None if full or backfill else repo.indexed_revision
+                stats["commits_ingested"] = self._ingest_commits(repo, revision, since)
 
             stats.update(
                 knowledge_created=k.created, knowledge_updated=k.updated, knowledge_unchanged=k.unchanged,
@@ -311,9 +314,11 @@ class Indexer:
         self.conn.execute("DELETE FROM symbols_fts WHERE repo_id=? AND path=?", (repo_id, path))
         for s in symbols[:2000]:
             self.conn.execute("INSERT INTO symbols(repo_id, path, name, kind, line, signature) VALUES (?,?,?,?,?,?)", (repo_id, path, s.name, s.kind, s.line, s.signature))
+            refs = getattr(s, "refs", None) or []
             self.conn.execute(
-                "INSERT INTO symbols_fts(terms, repo_id, path, name, kind, line, signature) VALUES (?,?,?,?,?,?,?)",
-                (" ".join([s.name, *terms(s.name), *terms(path)]), repo_id, path, s.name, s.kind, s.line, s.signature),
+                "INSERT INTO symbols_fts(terms, refs, repo_id, path, name, kind, line, signature) VALUES (?,?,?,?,?,?,?,?)",
+                (" ".join([s.name, *terms(s.name), *terms(path)]), " ".join([*refs, *terms(" ".join(refs))]),
+                 repo_id, path, s.name, s.kind, s.line, s.signature),
             )
 
     def _delete_file(self, repo_id: str, path: str) -> None:
@@ -345,10 +350,15 @@ class Indexer:
         with Tx(self.conn):
             for c in commits:
                 cur = self.conn.execute(
-                    "INSERT OR IGNORE INTO commits(repo_id, sha, committed_at, subject, files) VALUES (?,?,?,?,?)",
-                    (repo.id, c.sha, c.committed_at, c.subject, json.dumps(c.files)),
+                    "INSERT OR IGNORE INTO commits(repo_id, sha, committed_at, subject, files, body) VALUES (?,?,?,?,?,?)",
+                    (repo.id, c.sha, c.committed_at, c.subject, json.dumps(c.files), c.body),
                 )
                 if not cur.rowcount:
+                    # Stored before commit bodies were kept: add the body and rebuild its knowledge.
+                    upd = self.conn.execute("UPDATE commits SET body=? WHERE repo_id=? AND sha=? AND body IS NULL", (c.body, repo.id, c.sha))
+                    if upd.rowcount and _FIX_COMMIT.search(c.subject):
+                        self._delete_commit_knowledge(repo.id, c.sha)
+                        self._commit_knowledge(repo.id, c)
                     continue
                 added += 1
                 for path in c.files:
@@ -360,9 +370,12 @@ class Indexer:
 
     def _commit_knowledge(self, repo_id: str, c: gitutil.Commit) -> None:
         shown = ", ".join(c.files[:8]) + (f" (+{len(c.files) - 8} more)" if len(c.files) > 8 else "")
+        # The body usually explains *why*; keep it (trailers and emails were stripped by gitutil).
+        why = redact(re.sub(r"\s+", " ", c.body).strip())[0] if c.body else None
         cand = Candidate(
             key=f"commit:{c.sha}", category="debugging", title=f"Fix commit {c.sha[:10]}: {c.subject[:120]}",
             content=f"Commit {c.sha[:10]} ({c.committed_at[:10]}): {c.subject}." + (f" Files changed: {shown}." if shown else ""),
+            rationale=first_sentences(why, 700) if why else None,
             entities=["commit", "fix", *[p.split('/')[-1] for p in c.files[:8]]], confidence=0.6,
         )
         from .knowledge import fingerprint
@@ -381,9 +394,12 @@ class Indexer:
         for sha in old:
             self.conn.execute("DELETE FROM commits WHERE repo_id=? AND sha=?", (repo_id, sha))
             self.conn.execute("DELETE FROM commit_files WHERE repo_id=? AND sha=?", (repo_id, sha))
-            for r in self.conn.execute("SELECT DISTINCT knowledge_id FROM knowledge_sources WHERE repo_id=? AND extract_key=?", (repo_id, f"commit:{sha}")).fetchall():
-                self.conn.execute("DELETE FROM knowledge_fts WHERE kid=?", (r["knowledge_id"],))
-                self.conn.execute("DELETE FROM knowledge WHERE id=? AND origin='git'", (r["knowledge_id"],))
+            self._delete_commit_knowledge(repo_id, sha)
+
+    def _delete_commit_knowledge(self, repo_id: str, sha: str) -> None:
+        for r in self.conn.execute("SELECT DISTINCT knowledge_id FROM knowledge_sources WHERE repo_id=? AND extract_key=?", (repo_id, f"commit:{sha}")).fetchall():
+            self.conn.execute("DELETE FROM knowledge_fts WHERE kid=?", (r["knowledge_id"],))
+            self.conn.execute("DELETE FROM knowledge WHERE id=? AND origin='git'", (r["knowledge_id"],))
 
     # ---------------------------------------------------------- run lock
     def _acquire(self, repo: Repo, mode: str) -> int:

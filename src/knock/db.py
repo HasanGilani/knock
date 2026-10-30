@@ -158,6 +158,16 @@ MIGRATIONS: list[str] = [
         PRIMARY KEY (repo_id, name)
     );
     """,
+    # v2 — commit message bodies; symbols_fts gains a `refs` column (what each function calls/catches/reads)
+    """
+    ALTER TABLE commits ADD COLUMN body TEXT;
+    DROP TABLE symbols_fts;
+    CREATE VIRTUAL TABLE symbols_fts USING fts5(
+        terms, refs, repo_id UNINDEXED, path UNINDEXED, name UNINDEXED, kind UNINDEXED,
+        line UNINDEXED, signature UNINDEXED, tokenize = 'porter unicode61'
+    );
+    UPDATE files SET extractor_version = 0;
+    """,
 ]
 
 SCHEMA_VERSION = len(MIGRATIONS)

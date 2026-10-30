@@ -113,3 +113,30 @@ def term_match(query_term: str, text_term: str) -> bool:
         return True
     short, long_ = sorted((query_term, text_term), key=len)
     return len(short) >= 4 and long_.startswith(short[: max(4, len(short) - 2)]) and len(long_) - len(short) <= 5
+
+
+# Small, generic vocabulary bridges between how people describe code and how code names things.
+# Deliberately short: each entry is a common programming synonym, not tuned to one repository.
+_SYNONYM_GROUPS = [
+    ("verify", "verified", "verification", "validate", "validation", "signature", "check"),
+    ("log", "logs", "logging", "logger"),
+    ("error", "errors", "exception", "exceptions", "fail", "fails", "failing", "failure"),
+    ("login", "logout", "auth", "authenticate", "authentication", "signin"),
+    ("delete", "remove", "drop"),
+    ("config", "configuration", "settings", "setting"),
+    ("database", "db", "sql"),
+    ("token", "jwt"),
+    ("env", "environment"),
+    ("permission", "permissions", "authorize", "authorization", "access"),
+    ("cache", "caching", "cached"),
+    ("password", "passwd", "pwd"),
+]
+SYNONYMS: dict[str, tuple[str, ...]] = {}
+for _group in _SYNONYM_GROUPS:
+    for _word in _group:
+        SYNONYMS[_word] = tuple(w for w in _group if w != _word)
+
+
+def expand_terms(query_terms: list[str]) -> dict[str, tuple[str, ...]]:
+    """Map each query term to its synonyms (empty tuple when it has none)."""
+    return {t: SYNONYMS.get(t, ()) for t in query_terms}

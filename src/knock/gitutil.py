@@ -8,6 +8,7 @@ indexing an untrusted repository never executes code from it.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -74,6 +75,19 @@ class Commit:
     committed_at: str
     subject: str
     files: list[str]
+    body: str = ""
+
+
+_TRAILER = re.compile(r"^[A-Za-z][\w-]*-by:.*$|^(Change-Id|Reviewed-on|Signed-off-by):.*$", re.M)
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+
+
+def clean_body(body: str, limit: int = 1200) -> str:
+    """Commit body without trailers (Signed-off-by, Co-authored-by, ...) or email addresses."""
+    body = _TRAILER.sub("", body)
+    body = _EMAIL.sub("[email]", body)
+    body = re.sub(r"\n{3,}", "\n\n", body).strip()
+    return body[:limit]
 
 
 def recent_commits(root: Path, limit: int, since: str | None = None) -> list[Commit]:
@@ -81,20 +95,20 @@ def recent_commits(root: Path, limit: int, since: str | None = None) -> list[Com
     rng = [f"{since}..HEAD"] if since else ["HEAD"]
     out = run_git(
         root, "log", "--no-color", "--no-ext-diff", "--no-textconv", "--no-renames",
-        f"--max-count={limit}", "--name-only", "--format=%x1e%H%x1f%cI%x1f%s", *rng, "--",
+        f"--max-count={limit}", "--name-only", "--format=%x1e%H%x1f%cI%x1f%s%x1f%b%x1d", *rng, "--",
     )
     if out is None and since:
         # ``since`` may no longer exist (history rewritten); fall back to plain history.
         return recent_commits(root, limit)
     commits: list[Commit] = []
     for record in (out or "").split("\x1e"):
-        record = record.strip("\n")
-        if not record:
+        if not record.strip():
             continue
-        header, _, body = record.partition("\n")
-        parts = header.split("\x1f")
-        if len(parts) != 3:
+        header, _, files_part = record.partition("\x1d")
+        parts = header.strip("\n").split("\x1f")
+        if len(parts) != 4:
             continue
-        files = [f for f in body.splitlines() if f.strip()]
-        commits.append(Commit(sha=parts[0], committed_at=parts[1], subject=parts[2][:300], files=files[:200]))
+        files = [f for f in files_part.splitlines() if f.strip()]
+        commits.append(Commit(sha=parts[0], committed_at=parts[1], subject=parts[2][:300], files=files[:200],
+                              body=clean_body(parts[3])))
     return commits

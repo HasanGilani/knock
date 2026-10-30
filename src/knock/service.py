@@ -381,8 +381,13 @@ class KnockService:
                     continue
                 file_score[p] = file_score.get(p, 0) + r.score / (1 + rank * 0.3)
                 why.setdefault(p, []).append(f"{r.row['category']}: {r.row['title'][:70]}")
+        seen_symbol_files: set[str] = set()
         for rank, s in enumerate(symbols):
-            file_score[s["path"]] = file_score.get(s["path"], 0) + 0.25 / (1 + rank * 0.3)
+            # Only a file's best-ranked symbol counts: many loosely matching functions in one big file
+            # must not outrank a file that a relevant knowledge item points to.
+            if s["path"] not in seen_symbol_files:
+                seen_symbol_files.add(s["path"])
+                file_score[s["path"]] = file_score.get(s["path"], 0) + 0.25 / (1 + rank * 0.3)
             why.setdefault(s["path"], []).append(f"defines {s['symbol']} (line {s['line']})")
         for p in paths:
             file_score[p] = file_score.get(p, 0) + 10
