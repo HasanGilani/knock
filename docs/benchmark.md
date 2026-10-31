@@ -164,6 +164,17 @@ All six Tuesday edits are equivalent (a counter plus a `task_logger.info` call i
 
 **Caveats:** 3 runs per condition, one repository, one scenario. The map's seed-ranking bug was found and fixed while checking knock's output for these exact tasks before recording, so this scenario is not untuned. Across both days together, knock's median cost was about 24% lower ($0.43 vs $0.56); that number depends entirely on the mix of investigation and editing.
 
+### Edit re-test after "edit mode" (3 runs each, 2026-10-31)
+
+Edit mode gives change requests a lighter map: an exact `Read` range and real usages to follow, with no doc quotes. It was developed while looking at knock's output for these same two tasks. Only the Tuesday edits were re-run, with and without knock, in the same batch:
+
+| | without knock | with knock (before edit mode, earlier batch) | with knock + edit mode |
+|---|---|---|---|
+| Saleor edit | **$0.074 [0.058–0.081] · 3 calls** | $0.144 · 8 calls | $0.097 [0.073–0.104] · 5 calls |
+| Flask edit | **$0.058 [0.058–0.081] · 5 calls** | $0.085 · 7 calls | $0.073 [0.063–0.086] · 6 calls |
+
+All 12 edits are correct and equivalent. Claude used the suggested `Read` ranges, and on Flask it read the suggested `app.py` logging lines instead of searching for them. Edit mode narrowed the gap but did not close it, and the reason is structural. Without knock, an edit whose file a single regex finds takes 3 calls (grep, Read, Edit). With knock, the minimum is 4: loading the MCP tools (a fixed Claude Code step), `map`, Read, Edit. **For small edits in code that one search can find, the agent should skip knock.** The win is in investigations: on Saleor the Monday saving ($0.20 per session) is about ten times the edit overhead ($0.02).
+
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
 This benchmark uses the same model, the same system prompt, the same 20-turn limit and the same starting state. The **baseline** gets `list_files`/`grep`/`read_file`. The **knock** condition gets the same tools plus `get_context`/`search_knowledge`/`get_knowledge`/`get_source`, served in-process by the same service the MCP server uses. The order of the two conditions alternates per task. Prompt caching is enabled identically in both conditions (top-level automatic `cache_control`).
