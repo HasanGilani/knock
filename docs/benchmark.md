@@ -123,7 +123,18 @@ What this does and doesn't show: knock doesn't pay off on small, well-known repo
 - v2 passes the code questions (architecture, locating features, code bugs) in one call with a fraction of v1's text. It misses some "why" and symptom questions whose answer sits deep in a doc section (Flask design rationale, the template's first-start note, import-sorting config).
 - The held-out set is no longer fully untuned: indexing module-level objects (`api_router = APIRouter()`) was motivated by a held-out failure. v1's held-out score rose from 10/12 to 11/12 because of it.
 - Also changed while building v2: word matching now uses suffix stemming (so "logged" no longer matches "logger"), and Python functions record references to constants and classes.
-- Not yet measured: v2 inside real Claude Code sessions (`record-v2.sh` in the workspace runs that comparison).
+- **In real Claude Code sessions (3 runs each, same Monday/Tuesday scenario, `claude-sonnet-5`, 2026-10-31):**
+
+  | | without knock | with knock v2 (`map`/`open`/`remember`) |
+  |---|---|---|
+  | Monday | 99 s [85–104] · $0.25 [$0.22–0.26] · 17 tool calls | 127 s [104–187] · $0.29 [$0.21–0.42] · 18 tool calls |
+  | Tuesday | 24 s [17–26] · $0.085 [$0.065–0.10] · 6 tool calls | 27 s [21–30] · $0.085 [$0.073–0.10] · 7 tool calls |
+
+  All 12 answers were correct and all six Tuesday edits are equivalent. **v2 shows no measurable win here either.** The transcripts show why:
+  - `map` + `open` replaced Claude's own `grep` + `Read` almost one-for-one: in a repository Claude already knows, finding the code was never the expensive part.
+  - Monday's cost is dominated by things outside the repository's code: in all 6 Monday sessions Claude tried to read the source of the `itsdangerous` library (3–8 blocked attempts each) and re-checked the fix commit with `git show`, even though the map quoted that commit's explanation.
+  - On Tuesday, all three v2 sessions still searched for how the code base logs (`grep logger.debug`), which the map does not show.
+  - Loading knock's tools costs one extra step per session (`ToolSearch`).
 
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
