@@ -60,6 +60,20 @@ Most clients accept the same shape:
 }
 ```
 
+## Compact "map" toolset (prototype)
+
+`knock serve --repo . --toolset map` exposes three tools instead of eight, with plain-text answers:
+
+| tool | what it returns |
+|---|---|
+| `map(task)` | the code relevant to a task as a skeleton: signatures, exact line ranges, what each function uses and catches, who calls it; plus commit/decision history, earlier findings, and the best doc or config sections. Usually 1–4K characters. Re-indexes changed files itself. |
+| `open(target)` | exact, line-numbered code for a symbol (`open_session`, `Class.method`) with what it calls and who calls it; or `path:start-end`; or a file's skeleton |
+| `remember(note, files?)` | saves a finding; `files` may be `"src/app.py"` or `"src/app.py:120-160"` strings |
+
+Suggested `CLAUDE.md` line: *"Before exploring the repo, call knock's map tool with your task. Save non-obvious findings with remember."*
+
+The same views are available from the CLI: `knock map "task"` and `knock open <target>`.
+
 ## Tool reference
 
 All tools return structured content plus the same data as compact JSON text. Every read response includes `freshness` (`fresh`, `stale`, `indexing`, `incomplete` or `never_indexed`, plus revisions). Every knowledge item includes `sources` (path, lines, and an `evidence` warning when the source changed) and `provenance`.

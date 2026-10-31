@@ -46,29 +46,61 @@ def _python(path: str, text: str) -> FileExtraction:
     for node in tree.body:
         if isinstance(node, ast.ClassDef):
             bases = ", ".join(_expr(b) for b in node.bases)
-            out.symbols.append(Symbol(node.name, "class", node.lineno, f"class {node.name}({bases})" if bases else f"class {node.name}"))
+            out.symbols.append(Symbol(node.name, "class", node.lineno, f"class {node.name}({bases})" if bases else f"class {node.name}",
+                                      refs=[_expr(b) for b in node.bases], end_line=node.end_lineno, doc=_doc1(node)))
             for item in node.body:
                 if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and not _dunder_noise(item.name):
-                    out.symbols.append(Symbol(f"{node.name}.{item.name}", "method", item.lineno, _py_sig(item), _py_refs(item)))
+                    out.symbols.append(_py_function(f"{node.name}.{item.name}", "method", item))
                 elif isinstance(item, (ast.Assign, ast.AnnAssign)):
                     targets = item.targets if isinstance(item, ast.Assign) else [item.target]
                     for tgt in targets:
                         if isinstance(tgt, ast.Name) and not tgt.id.startswith("__"):
-                            out.symbols.append(Symbol(f"{node.name}.{tgt.id}", "attribute", item.lineno, f"{node.name}.{tgt.id}"))
+                            out.symbols.append(Symbol(f"{node.name}.{tgt.id}", "attribute", item.lineno, f"{node.name}.{tgt.id}",
+                                                      end_line=item.end_lineno))
         elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            out.symbols.append(Symbol(node.name, "function", node.lineno, _py_sig(node), _py_refs(node)))
-        elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            name = node.targets[0].id
-            if name.isupper() and len(name) > 2:
-                out.symbols.append(Symbol(name, "constant", node.lineno, name))
+            out.symbols.append(_py_function(node.name, "function", node))
+        elif isinstance(node, (ast.Assign, ast.AnnAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for tgt in targets:
+                if not isinstance(tgt, ast.Name) or tgt.id.startswith("__"):
+                    continue
+                name = tgt.id
+                value = node.value
+                if name.isupper() and len(name) > 2:
+                    out.symbols.append(Symbol(name, "constant", node.lineno, name, end_line=node.end_lineno))
+                elif isinstance(value, ast.Call):
+                    # Module-level objects such as `app = Flask(__name__)` or `api_router = APIRouter()`.
+                    out.symbols.append(Symbol(name, "variable", node.lineno, f"{name} = {_expr(value.func)}(…)",
+                                              refs=_py_refs(node), end_line=node.end_lineno))
         elif isinstance(node, ast.If) and _is_main_guard(node.test):
-            out.symbols.append(Symbol("__main__", "entrypoint", node.lineno, 'if __name__ == "__main__"'))
+            out.symbols.append(Symbol("__main__", "entrypoint", node.lineno, 'if __name__ == "__main__"', end_line=node.end_lineno))
     for lineno, line in enumerate(text.splitlines(), 1):
         m = _ROUTE_DECORATOR.match(line)
         if m:
             method = m.group(1).upper() if m.group(1) not in ("route", "api_route") else "ROUTE"
             out.symbols.append(Symbol(f"{method} {m.group(2)}", "route", lineno, line.strip()[:160]))
     return out
+
+
+def _py_function(name: str, kind: str, fn: ast.FunctionDef | ast.AsyncFunctionDef) -> Symbol:
+    catches: list[str] = []
+    for h in ast.walk(fn):
+        if isinstance(h, ast.ExceptHandler) and h.type is not None:
+            for t in (h.type.elts if isinstance(h.type, ast.Tuple) else [h.type]):
+                label = _expr(t)
+                if label not in catches:
+                    catches.append(label)
+    start = min([d.lineno for d in fn.decorator_list] + [fn.lineno])
+    return Symbol(name, kind, start, _py_sig(fn), _py_refs(fn), end_line=fn.end_lineno, doc=_doc1(fn), catches=catches[:8])
+
+
+def _doc1(node: ast.AST) -> str:
+    try:
+        doc = ast.get_docstring(node) or ""
+    except TypeError:
+        return ""
+    first = doc.strip().split("\n\n")[0].replace("\n", " ")
+    return first_sentences(first, 140)
 
 
 _REF_NOISE = frozenset("""self cls super len str int float bool list dict set tuple isinstance getattr setattr hasattr
@@ -108,6 +140,8 @@ def _py_refs(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
             names_in(node.func)
         elif isinstance(node, ast.Attribute):
             add(node.attr)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and node.id[:1].isupper():
+            add(node.id)  # constants (TAX_RATE) and classes (BadSignature); local variables stay out
         elif isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
             if _CONFIG_KEY.match(node.slice.value):
                 add(node.slice.value)

@@ -111,6 +111,20 @@ All 12 sessions answered correctly (function, file, fix commit and Flask version
 
 What this does and doesn't show: knock doesn't pay off on small, well-known repositories with easy tasks. Whether it pays off on large or unfamiliar codebases, where exploration is expensive, hasn't been measured yet.
 
+## knock v2 "map" prototype (deterministic benchmark)
+
+`map(task)` returns a code skeleton (signatures, line ranges, uses/catches, callers) plus history and doc quotes; the workflow is `map` then up to two `open` calls on its suggestions. Run on 2026-10-31 alongside v1:
+
+| | Flask (development set) | full-stack-fastapi-template (held-out) |
+|---|---|---|
+| v1 `get_context` + ≤2 `get_source` | 12/12 · 93,329 chars | 11/12 · 79,663 chars |
+| v2 `map` + ≤2 `open` | 9/12 · 65,304 chars | 9/12 · 29,970 chars (median 2,302 per task) |
+
+- v2 passes the code questions (architecture, locating features, code bugs) in one call with a fraction of v1's text. It misses some "why" and symptom questions whose answer sits deep in a doc section (Flask design rationale, the template's first-start note, import-sorting config).
+- The held-out set is no longer fully untuned: indexing module-level objects (`api_router = APIRouter()`) was motivated by a held-out failure. v1's held-out score rose from 10/12 to 11/12 because of it.
+- Also changed while building v2: word matching now uses suffix stemming (so "logged" no longer matches "logger"), and Python functions record references to constants and classes.
+- Not yet measured: v2 inside real Claude Code sessions (`record-v2.sh` in the workspace runs that comparison).
+
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
 This benchmark uses the same model, the same system prompt, the same 20-turn limit and the same starting state. The **baseline** gets `list_files`/`grep`/`read_file`. The **knock** condition gets the same tools plus `get_context`/`search_knowledge`/`get_knowledge`/`get_source`, served in-process by the same service the MCP server uses. The order of the two conditions alternates per task. Prompt caching is enabled identically in both conditions (top-level automatic `cache_control`).

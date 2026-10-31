@@ -128,6 +128,17 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("serve", help="run the MCP server over stdio")
     p.add_argument("--repo", action="append", help="repository path/name to serve (repeatable; default: current directory)")
     p.add_argument("--no-refresh", action="store_true", help="skip the incremental refresh at start-up")
+    p.add_argument("--toolset", choices=["full", "map"], default="full",
+                   help="'map' exposes 3 tools (map, open, remember) with compact text answers; 'full' the original 8 tools")
+
+    p = sub.add_parser("map", help="structural code map for a task")
+    p.add_argument("task")
+    p.add_argument("--repo")
+    p.add_argument("--max-chars", type=int)
+
+    p = sub.add_parser("open", help="exact code for a symbol, path:start-end, or file skeleton")
+    p.add_argument("target")
+    p.add_argument("--repo")
 
     sub.add_parser("config", help="print effective configuration")
 
@@ -225,7 +236,13 @@ def _dispatch(args, svc: KnockService, config) -> int:
             repo = indexer.find_repo(svc.conn, ref) if not os.path.isdir(ref) else None
             ids.append(repo.id if repo else svc.register(ref)["id"])
         svc.close()
-        serve(config, ids, refresh_on_start=not args.no_refresh)
+        serve(config, ids, refresh_on_start=not args.no_refresh, toolset=args.toolset)
+        return 0
+    if cmd == "map":
+        print(svc.code_map(args.task, repository=args.repo, max_chars=args.max_chars))
+        return 0
+    if cmd == "open":
+        print(svc.open_code(args.target, repository=args.repo))
         return 0
     if cmd == "config":
         _print(config.to_dict(), True)

@@ -185,6 +185,24 @@ def knock_flow(task: dict, svc: KnockService, repo: str) -> dict:
             "freshness": ctx["freshness"]["state"]}
 
 
+def knock_map_flow(task: dict, svc: KnockService, repo: str) -> dict:
+    """knock v2: map(task), then open() the suggested symbols (max 2) while facts are missing."""
+    t0 = time.perf_counter()
+    text = svc.code_map(task["prompt"], repository=repo)
+    consumed, calls = text, 1
+    ok, missing = passes(task["required"], consumed)
+    followed = []
+    for target in re.findall(r'open\("([^"]+)"\)', text)[:KNOCK_FOLLOWUPS]:
+        if ok or target == "<name>":
+            continue
+        consumed += "\n" + svc.open_code(target, repository=repo)
+        calls += 1
+        followed.append(target)
+        ok, missing = passes(task["required"], consumed)
+    return {"pass": ok, "missing": missing, "chars": len(consumed), "tool_calls": calls, "map_chars": len(text),
+            "followed": followed, "latency_ms": round((time.perf_counter() - t0) * 1000, 1)}
+
+
 # ------------------------------------------------------------- staleness
 def staleness_scenario(src_root: Path, workdir: Path, config: Config, sc: dict) -> dict:
     """Change a documented fact in a copy of the repo and check knock's behaviour before and after refresh."""
@@ -240,8 +258,10 @@ def main() -> None:
             b = baseline(task, files, lowered)
             bt = baseline_targeted(task, files, lowered)
             k = knock_flow(task, svc, rid)
+            km = knock_map_flow(task, svc, rid)
             o = oracle(task, files)
-            rows.append({"id": task["id"], "type": task["type"], "baseline": b, "baseline_targeted": bt, "knock": k, "oracle": o})
+            rows.append({"id": task["id"], "type": task["type"], "baseline": b, "baseline_targeted": bt, "knock": k,
+                         "knock_map": km, "oracle": o})
         # Cache behaviour: the same context request again (application-level cache only).
         cache_timings = []
         for task in spec["tasks"]:
@@ -278,6 +298,7 @@ def main() -> None:
         "baseline": agg("baseline"),
         "baseline_targeted": agg("baseline_targeted"),
         "knock": agg("knock"),
+        "knock_map": agg("knock_map"),
         "oracle_total_chars": sum(r["oracle"]["chars"] or 0 for r in rows),
         "cache": {
             "repeat_context_ms_median": round(statistics.median(t for t, _ in cache_timings), 2),
@@ -297,7 +318,7 @@ def main() -> None:
 
 
 def render(s: dict) -> str:
-    b, bt, k = s["baseline"], s["baseline_targeted"], s["knock"]
+    b, bt, k, km = s["baseline"], s["baseline_targeted"], s["knock"], s["knock_map"]
     lines = [
         f"# Retrieval benchmark: {s['repository']['name']} {s['repository']['ref']} ({s['repository']['commit'][:12]})",
         "",
@@ -320,19 +341,21 @@ def render(s: dict) -> str:
         f"| baseline A (grep + read 3 files) | {b['passed']}/{b['tasks']} | {b['total_chars']:,} | {b['median_chars']:,.0f} | {b['est_total_tokens']:,} | {b['total_tool_calls']} |",
         f"| baseline B (targeted grep + 2 windows) | {bt['passed']}/{bt['tasks']} | {bt['total_chars']:,} | {bt['median_chars']:,.0f} | {bt['est_total_tokens']:,} | {bt['total_tool_calls']} |",
         f"| knock (get_context + ≤2 get_source) | {k['passed']}/{k['tasks']} | {k['total_chars']:,} | {k['median_chars']:,.0f} | {k['est_total_tokens']:,} | {k['total_tool_calls']} |",
+        f"| knock v2 map (map + ≤2 open) | {km['passed']}/{km['tasks']} | {km['total_chars']:,} | {km['median_chars']:,.0f} | {km['est_total_tokens']:,} | {km['total_tool_calls']} |",
         f"| oracle (smallest single sufficient file) | — | {s['oracle_total_chars']:,} | — | {estimate_tokens(s['oracle_total_chars']):,} | — |",
         "",
         "## Per task",
         "",
-        "| task | type | A pass | A chars | B pass | B chars | knock pass | knock chars | knock calls | missing (knock) |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "| task | type | A pass | A chars | B pass | B chars | knock pass | knock chars | v2 pass | v2 chars | v2 calls | missing (v2) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in s["tasks"]:
         lines.append(
             f"| {r['id']} | {r['type']} | {'yes' if r['baseline']['pass'] else 'no'} | {r['baseline']['chars']:,} | "
             f"{'yes' if r['baseline_targeted']['pass'] else 'no'} | {r['baseline_targeted']['chars']:,} | "
-            f"{'yes' if r['knock']['pass'] else 'no'} | {r['knock']['chars']:,} | {r['knock']['tool_calls']} | "
-            f"{', '.join(r['knock']['missing']) or '—'} |"
+            f"{'yes' if r['knock']['pass'] else 'no'} | {r['knock']['chars']:,} | "
+            f"{'yes' if r['knock_map']['pass'] else 'no'} | {r['knock_map']['chars']:,} | {r['knock_map']['tool_calls']} | "
+            f"{', '.join(r['knock_map']['missing']) or '—'} |"
         )
     c = s["cache"]
     st = s["staleness_scenario"]

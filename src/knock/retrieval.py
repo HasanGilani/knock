@@ -299,12 +299,11 @@ def fit_budget(items: list[dict], max_chars: int) -> tuple[list[dict], int]:
     return out, len(items) - len(out)
 
 
-def search_symbols(conn: sqlite3.Connection, repo_id: str, query: str, limit: int = 10) -> list[dict]:
-    """Symbols whose name, or what their body calls/catches/reads, matches the query.
+def score_symbols(conn: sqlite3.Connection, repo_id: str, query: str, pool: int = 200) -> list[tuple[float, sqlite3.Row]]:
+    """Score symbols whose name, or what their body calls/catches/reads, matches the query.
 
     A query term counts 1.5 when it matches the symbol's name, 1.0 when it matches a reference in its
-    body, and 0.6 when only a synonym matches. At most three results come from the same class or module,
-    so one big class cannot crowd out the function that actually does the work.
+    body, and 0.6 when only a synonym matches.
     """
     qterms = terms(query)
     expanded = expand_terms(qterms)
@@ -315,7 +314,7 @@ def search_symbols(conn: sqlite3.Connection, repo_id: str, query: str, limit: in
     rows = conn.execute(
         """SELECT path, name, kind, line, signature, refs, bm25(symbols_fts, 2.0, 1.0) AS bm FROM symbols_fts
            WHERE symbols_fts MATCH ? AND repo_id = ? ORDER BY bm LIMIT ?""",
-        (match, repo_id, max(limit * 20, 200)),
+        (match, repo_id, pool),
     ).fetchall()
     mentions_tests = bool(re.search(r"\btests?\b", query, re.I))
     scored = []
@@ -341,6 +340,13 @@ def search_symbols(conn: sqlite3.Connection, repo_id: str, query: str, limit: in
         if not mentions_tests and is_test_path(r["path"]):
             score *= 0.3
         scored.append((score, r))
+    return scored
+
+
+def search_symbols(conn: sqlite3.Connection, repo_id: str, query: str, limit: int = 10) -> list[dict]:
+    """Best symbol matches; at most three from the same class or module, so one big class cannot crowd
+    out the function that actually does the work."""
+    scored = score_symbols(conn, repo_id, query, pool=max(limit * 20, 200))
     scored.sort(key=lambda x: (-x[0], x[1]["path"], x[1]["line"]))
     out: list[dict] = []
     per_owner: dict[tuple[str, str], int] = {}

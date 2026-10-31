@@ -168,6 +168,15 @@ MIGRATIONS: list[str] = [
     );
     UPDATE files SET extractor_version = 0;
     """,
+    # v3 — code map: line ranges, first docstring line, references and caught exceptions per symbol
+    """
+    ALTER TABLE symbols ADD COLUMN end_line INTEGER;
+    ALTER TABLE symbols ADD COLUMN doc TEXT;
+    ALTER TABLE symbols ADD COLUMN refs TEXT;
+    ALTER TABLE symbols ADD COLUMN catches TEXT;
+    CREATE INDEX symbols_repo_name ON symbols(repo_id, name);
+    UPDATE files SET extractor_version = 0;
+    """,
 ]
 
 SCHEMA_VERSION = len(MIGRATIONS)

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import re
 import uuid
 from datetime import datetime, timezone
+from functools import lru_cache
 
 _IDENT_PARTS = re.compile(r"[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z]+|[A-Z]+|\d+")
 _WORDS = re.compile(r"[A-Za-z_][A-Za-z0-9_]*|\d+")
@@ -107,12 +109,46 @@ def first_sentences(text: str, limit: int) -> str:
     return clean_text(text, limit)
 
 
+_SUFFIXES = ("ational", "ations", "ation", "ments", "ment", "ings", "ing", "ies", "ied", "ed", "es", "s")
+
+
+@lru_cache(maxsize=65536)
+def stems(word: str) -> frozenset[str]:
+    """A small set of plausible stems: the word plus single-suffix strips (logged -> log, cookies -> cookie)."""
+    out = {word}
+    for suf in _SUFFIXES:
+        if word.endswith(suf) and len(word) - len(suf) >= 3:
+            base = word[: -len(suf)]
+            if len(base) >= 4 and base[-1] == base[-2] and base[-1] not in "lsz":
+                base = base[:-1]  # stopped -> stop, logged -> log
+            out.add(base)
+            if suf in ("ies", "ied"):
+                out.add(base + "y")
+                out.add(base + "ie")
+            if suf.startswith("ation"):
+                out.add(base + "ate")  # rotation -> rotate
+    return frozenset(out)
+
+
+@lru_cache(maxsize=262144)
 def term_match(query_term: str, text_term: str) -> bool:
-    """Loose match tolerant of plurals/inflections: equal, or one is a >=4-char prefix of the other."""
+    """Match inflections (deploy/deploying, cookie/cookies, register/registration) without conflating
+    different words that share a prefix (logged/logger)."""
     if query_term == text_term:
         return True
-    short, long_ = sorted((query_term, text_term), key=len)
-    return len(short) >= 4 and long_.startswith(short[: max(4, len(short) - 2)]) and len(long_) - len(short) <= 5
+    a, b = stems(query_term), stems(text_term)
+    if a & b:
+        return True
+    # A shared prefix only counts when at least one side is a stripped stem (registr ~ register),
+    # never between two unrelated whole words (logged vs logger).
+    for x in a:
+        for y in b:
+            if x == query_term and y == text_term:
+                continue
+            cp = len(os.path.commonprefix([x, y]))
+            if cp >= 5 and cp >= min(len(x), len(y)) - 2:
+                return True
+    return False
 
 
 # Small, generic vocabulary bridges between how people describe code and how code names things.

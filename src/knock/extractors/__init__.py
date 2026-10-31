@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-EXTRACTOR_VERSION = 4
+EXTRACTOR_VERSION = 6
 
 CATEGORIES = (
     "architecture",
@@ -53,6 +53,9 @@ class Symbol:
     line: int
     signature: str = ""
     refs: list[str] = field(default_factory=list)   # what the body calls, catches, raises and reads
+    end_line: int | None = None
+    doc: str = ""                                    # first line of the docstring
+    catches: list[str] = field(default_factory=list)
 
 
 @dataclass

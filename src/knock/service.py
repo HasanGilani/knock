@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -596,6 +597,127 @@ class KnockService:
         if action == "verify" and set(hashes) & set(f["modified_paths"]):
             res["warning"] = "Some cited files are modified in the working tree but not re-indexed; the recorded evidence hash is the last indexed version. Run refresh_repository after saving changes."
         return res
+
+    # ------------------------------------------------------------ code map (v2)
+    AUTO_REFRESH_MAX_FILES = 50
+
+    def _ensure_fresh(self, repo: Repo) -> tuple[Repo, str]:
+        """Re-index changed files before answering, when that is cheap. Returns (repo, freshness label)."""
+        f = indexer.freshness(self.conn, repo, self.config)
+        changed = f["files_modified_since_index"] + f["files_deleted_since_index"]
+        if f["state"] in ("stale", "never_indexed", "incomplete") and changed <= self.AUTO_REFRESH_MAX_FILES:
+            result = self.refresh_repository(repo.id)
+            if result.get("status") == "completed":
+                repo = self.resolve(repo.id)
+                touched = result["files_added"] + result["files_modified"] + result["files_deleted"]
+                return repo, f"fresh (re-indexed {touched} changed file{'s' if touched != 1 else ''} just now)"
+        f = indexer.freshness(self.conn, repo, self.config)
+        if f["state"] == "fresh":
+            return repo, "fresh"
+        return repo, f"{f['state']} ({f['files_modified_since_index']} files changed since indexing; verify line numbers)"
+
+    def code_map(self, task: str, repository: str | None = None, max_chars: int | None = None) -> str:
+        from .codemap import CodeMap
+
+        t0 = time.perf_counter()
+        repo = self.resolve(repository)
+        task = clean_text(task or "", 1000)
+        if not task:
+            raise KnockError("task must not be empty")
+        repo, fresh = self._ensure_fresh(repo)
+        knowledge, _diag = search(self.conn, repo.id, task, limit=8)
+        cm = CodeMap(self.conn, repo.id)
+        ranked = cm.rank(task, knowledge)
+        rev = (repo.indexed_revision or "")[:10] or "working tree"
+        header = f"knock map · {repo.name} @ {rev} · {fresh}"
+        budget = max(1000, min(max_chars or 3000, 20000))
+        text, _targets = cm.render(task, header, ranked, knowledge, max_chars=budget)
+        self.metrics.incr(repo.id, "map_requests")
+        self.metrics.observe(repo.id, "est_response_chars", len(text))
+        self._timed(repo.id, "map", t0)
+        return text
+
+    _RANGE = re.compile(r"^(?P<path>[^:]+):(?P<a>\d+)(?:-(?P<b>\d+))?$")
+
+    def open_code(self, target: str, repository: str | None = None) -> str:
+        from .codemap import OPEN_MAX_LINES, CodeMap
+
+        t0 = time.perf_counter()
+        repo = self.resolve(repository)
+        target = (target or "").strip()
+        if not target:
+            raise KnockError("target must be a symbol name, a file path, or path:start-end")
+        cm = CodeMap(self.conn, repo.id)
+        m = self._RANGE.match(target)
+        if m:
+            rel = self._safe_rel(m["path"])
+            a = int(m["a"]); b = int(m["b"] or a)
+            ex = self._read_excerpt(repo, rel, a, min(b, a + OPEN_MAX_LINES * 2), max_chars=self.config.source_max_chars)
+            text = f"{rel}  L{ex['start_line']}-{ex['end_line']} of {ex['total_lines']}\n{ex['content']}"
+        elif "/" in target or re.search(r"\.\w{1,5}$", target) and self.conn.execute(
+                "SELECT 1 FROM files WHERE repo_id=? AND path=?", (repo.id, target.lstrip("./"))).fetchone():
+            rel = self._safe_rel(target)
+            if not self.conn.execute("SELECT 1 FROM files WHERE repo_id=? AND path=? AND status='indexed'", (repo.id, rel)).fetchone():
+                raise KnockError(f"{rel} is not an indexed file")
+            text = cm.file_skeleton(rel)
+            if text.count("\n") == 0:
+                ex = self._read_excerpt(repo, rel, 1, OPEN_MAX_LINES, max_chars=self.config.source_max_chars)
+                text = f"{rel}  L1-{ex['end_line']} of {ex['total_lines']}\n{ex['content']}"
+        else:
+            cands = cm.resolve(target)
+            if not cands:
+                raise KnockError(f"no symbol named {target!r}; use map(task) to find names, or pass path:start-end")
+            if len(cands) > 1:
+                listing = "\n".join(f"  {c.name}  {c.path}:{c.line}  {c.signature}" for c in cands[:10])
+                return f"{len(cands)} symbols match {target!r}; open one by its full name:\n{listing}"
+            sym = cands[0]
+            end = min(sym.end_line or sym.line + 40, sym.line + OPEN_MAX_LINES - 1)
+            ex = self._read_excerpt(repo, sym.path, sym.line, end, max_chars=self.config.source_max_chars)
+            more = f" (first {end - sym.line + 1} of {sym.end_line - sym.line + 1} lines; open \"{sym.path}:{end + 1}-{sym.end_line}\" for the rest)" \
+                if sym.end_line and sym.end_line > end else ""
+            parts = [f"{sym.name}  {sym.path}  L{ex['start_line']}-{ex['end_line']}{more}"]
+            if ex.get("changed_since_index"):
+                parts.append("(file changed since indexing; this is the current text)")
+            parts.append(ex["content"])
+            nb = cm.neighbours_text(sym)
+            if nb:
+                parts += ["", *nb]
+            text = "\n".join(parts)
+        self.metrics.incr(repo.id, "source_reads")
+        self.metrics.observe(repo.id, "est_source_chars_served", len(text))
+        self._timed(repo.id, "open", t0)
+        return text
+
+    def _safe_rel(self, path: str) -> str:
+        try:
+            return normalize_rel_path(path)
+        except PathError as exc:
+            raise KnockError(f"invalid path: {exc}") from exc
+
+    def remember(self, note: str, files: list[str] | str | None = None, category: str | None = None,
+                 repository: str | None = None, supersedes: list[str] | None = None) -> str:
+        """Lenient wrapper over record_knowledge: files may be 'path' or 'path:10-20' strings."""
+        if isinstance(files, str):
+            files = [f for f in re.split(r"[,\s]+", files) if f]
+        sources = []
+        for f in files or []:
+            if isinstance(f, dict):
+                sources.append(f)
+                continue
+            m = self._RANGE.match(str(f).strip())
+            if m:
+                sources.append({"path": m["path"], "start_line": int(m["a"]), "end_line": int(m["b"] or m["a"])})
+            else:
+                sources.append({"path": str(f).strip()})
+        if not category:
+            category = "debugging" if re.search(r"\b(bug|fix|error|fail|crash|regression|broken|root cause)", note, re.I) else "implementation"
+        res = self.record_knowledge(category, note, repository=repository, sources=sources, supersedes=supersedes)
+        msg = f"saved {res['id']} ({res['outcome']}, {category})"
+        if res.get("possible_conflicts"):
+            msg += "; possibly conflicts with " + ", ".join(c["id"] for c in res["possible_conflicts"])
+        if not sources:
+            msg += "; tip: cite files so the note is flagged when they change"
+        return msg
 
     # ------------------------------------------------------------- status
     def repository_status(self, repository: str | None = None) -> dict:

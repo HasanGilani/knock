@@ -313,8 +313,12 @@ class Indexer:
         self.conn.execute("DELETE FROM symbols WHERE repo_id=? AND path=?", (repo_id, path))
         self.conn.execute("DELETE FROM symbols_fts WHERE repo_id=? AND path=?", (repo_id, path))
         for s in symbols[:2000]:
-            self.conn.execute("INSERT INTO symbols(repo_id, path, name, kind, line, signature) VALUES (?,?,?,?,?,?)", (repo_id, path, s.name, s.kind, s.line, s.signature))
             refs = getattr(s, "refs", None) or []
+            self.conn.execute(
+                "INSERT INTO symbols(repo_id, path, name, kind, line, signature, end_line, doc, refs, catches) VALUES (?,?,?,?,?,?,?,?,?,?)",
+                (repo_id, path, s.name, s.kind, s.line, s.signature, s.end_line, s.doc or None,
+                 json.dumps(refs) if refs else None, json.dumps(s.catches) if s.catches else None),
+            )
             self.conn.execute(
                 "INSERT INTO symbols_fts(terms, refs, repo_id, path, name, kind, line, signature) VALUES (?,?,?,?,?,?,?,?)",
                 (" ".join([s.name, *terms(s.name), *terms(path)]), " ".join([*refs, *terms(" ".join(refs))]),

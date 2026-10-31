@@ -249,6 +249,7 @@ knock is an early **MVP** (v0.1). What works today and what's next:
 - [x] MCP server with 8 tools, caching and local metrics
 - [x] Reproducible benchmark with a held-out repo
 - [ ] Model-in-the-loop token and cost benchmark (harness ready)
+- [ ] Prototype: compact 3-tool "code map" (`--toolset map`), still being measured in real Claude Code sessions
 - [ ] Smarter matching for synonyms, and indexing module-level variables
 - [ ] Optional AI-assisted extraction (opt-in, disclosed)
 - [ ] Sharing knowledge across a team
