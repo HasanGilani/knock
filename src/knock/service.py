@@ -610,6 +610,8 @@ class KnockService:
             if result.get("status") == "completed":
                 repo = self.resolve(repo.id)
                 touched = result["files_added"] + result["files_modified"] + result["files_deleted"]
+                if not touched:
+                    return repo, "fresh"
                 return repo, f"fresh (re-indexed {touched} changed file{'s' if touched != 1 else ''} just now)"
         f = indexer.freshness(self.conn, repo, self.config)
         if f["state"] == "fresh":
@@ -617,7 +619,7 @@ class KnockService:
         return repo, f"{f['state']} ({f['files_modified_since_index']} files changed since indexing; verify line numbers)"
 
     def code_map(self, task: str, repository: str | None = None, max_chars: int | None = None) -> str:
-        from .codemap import CodeMap
+        from .codemap import CodeMap, is_change_request
 
         t0 = time.perf_counter()
         repo = self.resolve(repository)
@@ -627,11 +629,17 @@ class KnockService:
         repo, fresh = self._ensure_fresh(repo)
         knowledge, _diag = search(self.conn, repo.id, task, limit=8)
         cm = CodeMap(self.conn, repo.id)
-        ranked = cm.rank(task, knowledge)
+        edit = is_change_request(task)
+        ranked = cm.rank(task, knowledge, limit=6 if edit else 12)
         rev = (repo.indexed_revision or "")[:10] or "working tree"
-        header = f"knock map · {repo.name} @ {rev} · {fresh}"
-        budget = max(1000, min(max_chars or 3000, 20000))
-        text, _targets = cm.render(task, header, ranked, knowledge, max_chars=budget)
+        header = f"knock map · {repo.name} @ {rev} · {fresh}" + (" · change request" if edit else "")
+        budget = max(1000, min(max_chars or (1800 if edit else 3000), 20000))
+
+        def read_lines(rel: str) -> list[str]:
+            data = indexer._read_nofollow(resolve_inside(repo.root, rel))
+            return redact(data.decode("utf-8", "replace"))[0].splitlines()
+
+        text, _targets = cm.render(task, header, ranked, knowledge, max_chars=budget, edit=edit, read_lines=read_lines)
         self.metrics.incr(repo.id, "map_requests")
         self.metrics.observe(repo.id, "est_response_chars", len(text))
         self._timed(repo.id, "map", t0)

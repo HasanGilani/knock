@@ -19,18 +19,22 @@ Bodies are never paraphrased, so edits can rely on them.
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from . import retrieval
 from .extractors.code import is_test_path
 from .knowledge import fts_query
-from .util import clean_text, terms
+from .util import clean_text, expand_terms, term_match, terms
 
 MAP_MAX_CHARS = 3_000
 MIN_RELATIVE_SCORE = 0.3
+EDIT_READ_MAX_LINES = 200
+_USAGE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*[.(]")  # a name that is called or has an attribute accessed
 DOCS_QUOTED = 2
 DOC_QUOTE_CHARS = 380
 DOCS_QUOTED_DOC_QUESTION = 4
@@ -54,6 +58,35 @@ def code_identifiers(text: str) -> list[str]:
         if "_" in last or "." in word or re.search(r"[a-z][A-Z]", last) or (last.isupper() and len(last) > 3):
             out.setdefault(word, None)
     return list(out)
+
+
+_CHANGE_VERBS = re.compile(
+    r"^(?:please\s+|we\s+(?:need|want)\s+to\s+|i\s+(?:need|want)\s+to\s+|can\s+you\s+|let'?s\s+)?"
+    r"(add|implement|change|modify|update|fix|rename|remove|delete|refactor|introduce|log|make|support|replace|move|"
+    r"extract|create|write|emit|raise|handle|expose|allow|prevent|ensure|validate|reject|return|store|send|record)\b",
+    re.I,
+)
+
+
+def _string_lines(source: str) -> set[int]:
+    """Line numbers covered entirely by string literals (docstrings, long messages) in Python source."""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return set()
+    out: set[int] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+            out.update(range(node.lineno, (node.end_lineno or node.lineno) + 1))
+    return out
+
+
+def is_change_request(task: str) -> bool:
+    """True when some clause of the task is an instruction to change code ("add …", "log how many …")."""
+    for clause in re.split(r"[.;:,!?\n]+|\band\b", task):
+        if _CHANGE_VERBS.match(clause.strip()):
+            return True
+    return False
 
 
 @dataclass
@@ -228,8 +261,9 @@ class CodeMap:
 
     # ------------------------------------------------------------- render
     def render(self, task: str, header: str, ranked: list[Sym], knowledge: list[retrieval.Ranked],
-               max_chars: int = MAP_MAX_CHARS) -> tuple[str, list[str]]:
-        """Return (text, open_targets)."""
+               max_chars: int = MAP_MAX_CHARS, edit: bool = False,
+               read_lines: Callable[[str], list[str]] | None = None) -> tuple[str, list[str]]:
+        """Return (text, open_targets). ``edit`` gives the lighter map used for change requests."""
         qterms = set(terms(task))
         by_file: dict[str, list[Sym]] = {}
         for s in ranked:
@@ -254,14 +288,96 @@ class CodeMap:
             shown.extend(syms)
         # Questions about process or rationale are answered by docs and config, not code: quote more of them.
         doc_question = bool(retrieval.intents(task) & {"decision", "workflow", "convention", "dependency"})
+        targets = [s.name for s in shown if not is_test_path(s.path)][:3]
+        if edit:
+            # A change request needs the place to edit, how the surrounding code does it, and little else:
+            # the agent must read the file with its own tool before editing anyway.
+            notes = self._notes(knowledge, quoted=0, max_why=1, max_pointers=0)
+            editable = [s for s in ranked if not is_test_path(s.path) and s.kind in ("function", "method", "class", "variable")]
+            if not editable:
+                lines += ["", "No matching code found; fall back to searching the repository."]
+                return "\n".join(lines), targets
+            primary = editable[0]
+            # Read range: the best symbol plus other top symbols in the same file, while the span stays small.
+            start, end = primary.line, primary.end_line or primary.line
+            for other in editable[1:4]:
+                if other.path != primary.path:
+                    continue
+                lo, hi = min(start, other.line), max(end, other.end_line or other.line)
+                if hi - lo <= EDIT_READ_MAX_LINES:
+                    start, end = lo, hi
+            if read_lines:
+                style = self._style_examples(task, primary, read_lines)
+                if style:
+                    lines += ["", "Existing patterns to follow:", *style]
+            if notes:
+                lines += ["", *notes]
+            lines += ["", f"To edit: Read {primary.path} with offset {max(1, start - 2)} and limit {end - start + 5} "
+                          f"(your Read tool is required before Edit), then make the change. No need to open() it first."]
+            return "\n".join(lines), targets
         notes = self._notes(knowledge, quoted=DOCS_QUOTED_DOC_QUESTION if doc_question else DOCS_QUOTED,
                             quote_chars=DOC_QUOTE_CHARS_DOC_QUESTION if doc_question else DOC_QUOTE_CHARS)
         if notes:
             lines += ["", *notes]
-        targets = [s.name for s in shown if not is_test_path(s.path)][:3]
         lines += ["", "Exact code: open(\"<name>\") e.g. " + ", ".join(f'open("{t}")' for t in targets[:2])
                   + ", or read the file at the line ranges above." if targets else "No matching code found; fall back to searching the repository."]
         return "\n".join(lines), targets
+
+    def _style_examples(self, task: str, primary: Sym, read_lines: Callable[[str], list[str]], limit: int = 3) -> list[str]:
+        """Real usages of what the task asks to add, in the target's file or, failing that, its package.
+
+        Only task words the target does not already cover count (for "log how many checkouts were
+        queued" in a checkout task, that leaves "log"), and a line only counts when it *uses* a matching
+        name (a call or attribute access such as ``task_logger.info(``), not an import or prose.
+        """
+        covered = set(terms(" ".join([primary.name, *primary.refs, primary.path])))
+        # Words of the instruction itself ("log how many checkouts it queued"), not of the background
+        # ("…when old keys are failing" describes a symptom, not something to add).
+        clauses = [c.strip() for c in re.split(r"[.;:,!?\n]+|\band\b", task) if _CHANGE_VERBS.match(c.strip())]
+        wanted: set[str] = set()
+        for q in terms(" ".join(clauses) or task):
+            if not any(term_match(q, c) for c in covered):
+                wanted.add(q)
+                wanted.update(expand_terms([q])[q])
+        if not wanted:
+            return []
+
+        def scan(path: str, lo: int = 1, hi: int | None = None, skip: tuple[int, int] = (0, -1)) -> list[str]:
+            try:
+                text_lines = read_lines(path)
+            except Exception:  # unreadable file: no examples rather than an error
+                return []
+            prose = _string_lines("\n".join(text_lines)) if path.endswith(".py") else set()
+            found = []
+            for n, line in enumerate(text_lines[lo - 1:hi], lo):
+                code = line.split("#", 1)[0].strip()
+                if (not code or n in prose or skip[0] <= n <= skip[1]
+                        or code.startswith(("import ", "from ", '"', "'", "def ", "async def ", "class ", "@"))):
+                    continue
+                used = {m.group(1) for m in _USAGE.finditer(code)}
+                if any(term_match(w, t) for name in used for t in terms(name) for w in wanted):
+                    found.append(f"  {path}:{n}: {clean_text(code, 140)}")
+            return found
+
+        out = scan(primary.path, skip=(primary.line, primary.end_line or primary.line))[:limit]
+        if out:
+            return out
+        # Nothing in the file itself: look at symbols in the same package that reference a matching name.
+        package = primary.path.rsplit("/", 1)[0] + "/" if "/" in primary.path else ""
+        q = fts_query(sorted(wanted))
+        if not q:
+            return []
+        rows = self.conn.execute(
+            "SELECT path, name, line FROM symbols_fts WHERE symbols_fts MATCH ? AND repo_id=? LIMIT 100",
+            (f"refs : ({q})", self.repo_id)).fetchall()
+        for r in rows:
+            if not r["path"].startswith(package) or is_test_path(r["path"]) or _PERIPHERAL.search(r["path"]):
+                continue
+            for sym in self._rows("path=? AND name=? AND line=?", (r["path"], r["name"], r["line"])):
+                out.extend(scan(sym.path, sym.line, sym.end_line)[:1])
+            if len(out) >= limit:
+                break
+        return out[:limit]
 
     def _render_symbol(self, s: Sym, qterms: set[str], indent: str) -> list[str]:
         label = s.signature.replace("def ", "").replace("async def ", "async ") if s.kind in ("function", "method") else s.signature or s.name
@@ -291,7 +407,8 @@ class CodeMap:
             out.append(detail)
         return out
 
-    def _notes(self, knowledge: list[retrieval.Ranked], quoted: int = DOCS_QUOTED, quote_chars: int = DOC_QUOTE_CHARS) -> list[str]:
+    def _notes(self, knowledge: list[retrieval.Ranked], quoted: int = DOCS_QUOTED, quote_chars: int = DOC_QUOTE_CHARS,
+               max_why: int = 4, max_pointers: int = 2) -> list[str]:
         """Only what code cannot say: why (commits, decisions), agent findings; docs as pointers."""
         why, docs, used = [], [], 0
         for item in knowledge[:8]:
@@ -313,19 +430,19 @@ class CodeMap:
                 where = f"{s0['path']} L{s0['start_line']}-{s0.get('end_line') or s0['start_line']}"
                 if len(docs) < quoted:
                     docs.append(f"- {where} · {clean_text(r['title'], 70)}: {clean_text(r['content'], quote_chars)}")
-                else:
+                elif len(docs) < quoted + max_pointers:
                     docs.append(f"- {where}: {clean_text(r['title'], 80)}")
         out: list[str] = []
         if why:
             out.append("Why / history:")
-            for w in why[:4]:
+            for w in why[:max_why]:
                 if used + len(w) > NOTES_MAX_CHARS:
                     break
                 out.append(w)
                 used += len(w)
         if docs:
             out.append("Docs & config:")
-            out.extend(docs[:quoted + 2])
+            out.extend(docs[:quoted + max_pointers])
         return out
 
     # --------------------------------------------------------------- open

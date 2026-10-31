@@ -11,7 +11,7 @@
   },
   "task_set_role": "development set: knock's extractors and ranking were adjusted while looking at results on this repository, so these results are optimistic",
   "ingestion": {
-    "cold_index_ms": 672,
+    "cold_index_ms": 677,
     "noop_refresh_ms": 28,
     "files_indexed": 196,
     "files_reprocessed_on_noop": 0,
@@ -39,7 +39,7 @@
   "knock": {
     "passed": 12,
     "tasks": 12,
-    "total_chars": 93329,
+    "total_chars": 93330,
     "median_chars": 7506.0,
     "est_total_tokens": 23333,
     "total_tool_calls": 15
@@ -47,15 +47,15 @@
   "knock_map": {
     "passed": 9,
     "tasks": 12,
-    "total_chars": 65304,
-    "median_chars": 4196.5,
-    "est_total_tokens": 16326,
+    "total_chars": 63630,
+    "median_chars": 4756.5,
+    "est_total_tokens": 15908,
     "total_tool_calls": 16
   },
   "oracle_total_chars": 244044,
   "cache": {
-    "repeat_context_ms_median": 21.34,
-    "first_context_ms_median": 75.8,
+    "repeat_context_ms_median": 21.89,
+    "first_context_ms_median": 73.3,
     "repeat_hits": 12,
     "metrics": {
       "hits": 12,
@@ -111,7 +111,7 @@
           "context",
           "application"
         ],
-        "latency_ms": 4.8
+        "latency_ms": 5.0
       },
       "baseline_targeted": {
         "pass": false,
@@ -129,7 +129,7 @@
           "context",
           "application"
         ],
-        "latency_ms": 19.7
+        "latency_ms": 20.3
       },
       "knock": {
         "pass": true,
@@ -138,17 +138,17 @@
         "tool_calls": 1,
         "context_chars": 5071,
         "followed_sources": [],
-        "latency_ms": 62.2,
+        "latency_ms": 66.0,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 4058,
+        "chars": 3899,
         "tool_calls": 1,
-        "map_chars": 4058,
+        "map_chars": 3899,
         "followed": [],
-        "latency_ms": 75.7
+        "latency_ms": 78.8
       },
       "oracle": {
         "file": "src/flask/ctx.py",
@@ -173,7 +173,7 @@
           "matching",
           "dispatch"
         ],
-        "latency_ms": 6.4
+        "latency_ms": 6.5
       },
       "baseline_targeted": {
         "pass": true,
@@ -189,7 +189,7 @@
           "matching",
           "dispatch"
         ],
-        "latency_ms": 17.9
+        "latency_ms": 18.4
       },
       "knock": {
         "pass": true,
@@ -198,17 +198,17 @@
         "tool_calls": 1,
         "context_chars": 6434,
         "followed_sources": [],
-        "latency_ms": 68.5,
+        "latency_ms": 70.6,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 4076,
+        "chars": 3786,
         "tool_calls": 1,
-        "map_chars": 4076,
+        "map_chars": 3786,
         "followed": [],
-        "latency_ms": 83.5
+        "latency_ms": 96.8
       },
       "oracle": {
         "file": "src/flask/app.py",
@@ -249,7 +249,7 @@
           "routes",
           "handlers"
         ],
-        "latency_ms": 17.3
+        "latency_ms": 17.6
       },
       "knock": {
         "pass": true,
@@ -258,17 +258,17 @@
         "tool_calls": 1,
         "context_chars": 7402,
         "followed_sources": [],
-        "latency_ms": 65.2,
+        "latency_ms": 64.5,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 4166,
+        "chars": 3832,
         "tool_calls": 1,
-        "map_chars": 4166,
+        "map_chars": 3832,
         "followed": [],
-        "latency_ms": 80.8
+        "latency_ms": 92.2
       },
       "oracle": {
         "file": "src/flask/sansio/blueprints.py",
@@ -293,7 +293,7 @@
           "configuration",
           "values"
         ],
-        "latency_ms": 5.2
+        "latency_ms": 5.5
       },
       "baseline_targeted": {
         "pass": false,
@@ -311,7 +311,7 @@
           "configuration",
           "values"
         ],
-        "latency_ms": 17.6
+        "latency_ms": 18.2
       },
       "knock": {
         "pass": true,
@@ -320,17 +320,17 @@
         "tool_calls": 1,
         "context_chars": 7801,
         "followed_sources": [],
-        "latency_ms": 86.4,
+        "latency_ms": 87.0,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 4227,
+        "chars": 4156,
         "tool_calls": 1,
-        "map_chars": 4227,
+        "map_chars": 4156,
         "followed": [],
-        "latency_ms": 82.4
+        "latency_ms": 98.6
       },
       "oracle": {
         "file": "src/flask/app.py",
@@ -357,7 +357,7 @@
           "production",
           "give"
         ],
-        "latency_ms": 8.2
+        "latency_ms": 8.1
       },
       "baseline_targeted": {
         "pass": true,
@@ -373,7 +373,7 @@
           "production",
           "give"
         ],
-        "latency_ms": 19.3
+        "latency_ms": 18.3
       },
       "knock": {
         "pass": true,
@@ -382,17 +382,17 @@
         "tool_calls": 1,
         "context_chars": 7646,
         "followed_sources": [],
-        "latency_ms": 69.3,
+        "latency_ms": 66.6,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 5464,
+        "chars": 5357,
         "tool_calls": 1,
-        "map_chars": 5464,
+        "map_chars": 5357,
         "followed": [],
-        "latency_ms": 84.5
+        "latency_ms": 99.2
       },
       "oracle": {
         "file": "docs/deploying/gunicorn.rst",
@@ -417,7 +417,7 @@
           "environments",
           "tox"
         ],
-        "latency_ms": 7.9
+        "latency_ms": 7.8
       },
       "baseline_targeted": {
         "pass": true,
@@ -433,7 +433,7 @@
           "environments",
           "tox"
         ],
-        "latency_ms": 17.2
+        "latency_ms": 17.7
       },
       "knock": {
         "pass": true,
@@ -442,7 +442,7 @@
         "tool_calls": 1,
         "context_chars": 3111,
         "followed_sources": [],
-        "latency_ms": 59.9,
+        "latency_ms": 61.6,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -452,7 +452,7 @@
         "tool_calls": 1,
         "map_chars": 2891,
         "followed": [],
-        "latency_ms": 61.6
+        "latency_ms": 81.7
       },
       "oracle": {
         "file": "pyproject.toml",
@@ -477,7 +477,7 @@
           "hit",
           "debugger"
         ],
-        "latency_ms": 9.5
+        "latency_ms": 9.8
       },
       "baseline_targeted": {
         "pass": true,
@@ -493,7 +493,7 @@
           "hit",
           "debugger"
         ],
-        "latency_ms": 18.5
+        "latency_ms": 19.3
       },
       "knock": {
         "pass": true,
@@ -502,17 +502,17 @@
         "tool_calls": 1,
         "context_chars": 7286,
         "followed_sources": [],
-        "latency_ms": 85.5,
+        "latency_ms": 85.9,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 3964,
+        "chars": 5721,
         "tool_calls": 1,
-        "map_chars": 3964,
+        "map_chars": 5721,
         "followed": [],
-        "latency_ms": 93.4
+        "latency_ms": 113.3
       },
       "oracle": {
         "file": "docs/debugging.rst",
@@ -537,7 +537,7 @@
           "secret_key_fallbacks",
           "fallbacks"
         ],
-        "latency_ms": 10.3
+        "latency_ms": 10.4
       },
       "baseline_targeted": {
         "pass": true,
@@ -553,26 +553,26 @@
           "secret_key_fallbacks",
           "fallbacks"
         ],
-        "latency_ms": 18.5
+        "latency_ms": 18.8
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 5580,
+        "chars": 5582,
         "tool_calls": 1,
-        "context_chars": 5580,
+        "context_chars": 5582,
         "followed_sources": [],
-        "latency_ms": 96.7,
+        "latency_ms": 109.2,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 2676,
+        "chars": 2836,
         "tool_calls": 1,
-        "map_chars": 2676,
+        "map_chars": 2836,
         "followed": [],
-        "latency_ms": 86.0
+        "latency_ms": 85.6
       },
       "oracle": {
         "file": "src/flask/sessions.py",
@@ -599,7 +599,7 @@
           "explicit",
           "creating"
         ],
-        "latency_ms": 8.0
+        "latency_ms": 8.1
       },
       "baseline_targeted": {
         "pass": true,
@@ -615,18 +615,18 @@
           "explicit",
           "creating"
         ],
-        "latency_ms": 16.5
+        "latency_ms": 17.0
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 14106,
+        "chars": 14105,
         "tool_calls": 2,
-        "context_chars": 3096,
+        "context_chars": 3095,
         "followed_sources": [
           "docs/design.rst"
         ],
-        "latency_ms": 82.3,
+        "latency_ms": 76.0,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -634,13 +634,13 @@
         "missing": [
           "one instance"
         ],
-        "chars": 9881,
+        "chars": 10193,
         "tool_calls": 2,
-        "map_chars": 3097,
+        "map_chars": 3409,
         "followed": [
           "Flask"
         ],
-        "latency_ms": 92.6
+        "latency_ms": 117.8
       },
       "oracle": {
         "file": "docs/views.rst",
@@ -668,7 +668,7 @@
           "proxies",
           "passing"
         ],
-        "latency_ms": 11.8
+        "latency_ms": 12.0
       },
       "baseline_targeted": {
         "pass": false,
@@ -687,7 +687,7 @@
           "proxies",
           "passing"
         ],
-        "latency_ms": 17.8
+        "latency_ms": 18.1
       },
       "knock": {
         "pass": true,
@@ -696,7 +696,7 @@
         "tool_calls": 1,
         "context_chars": 7674,
         "followed_sources": [],
-        "latency_ms": 87.6,
+        "latency_ms": 89.2,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -704,13 +704,13 @@
         "missing": [
           "large applications|asynchronous servers"
         ],
-        "chars": 11391,
+        "chars": 6912,
         "tool_calls": 2,
-        "map_chars": 5617,
+        "map_chars": 5784,
         "followed": [
-          "RequestContext"
+          "Flask.request_context"
         ],
-        "latency_ms": 90.6
+        "latency_ms": 120.7
       },
       "oracle": {
         "file": "docs/design.rst",
@@ -737,7 +737,7 @@
           "live",
           "tools"
         ],
-        "latency_ms": 12.7
+        "latency_ms": 13.4
       },
       "baseline_targeted": {
         "pass": false,
@@ -755,7 +755,7 @@
           "live",
           "tools"
         ],
-        "latency_ms": 19.6
+        "latency_ms": 20.1
       },
       "knock": {
         "pass": true,
@@ -764,19 +764,19 @@
         "tool_calls": 1,
         "context_chars": 7610,
         "followed_sources": [],
-        "latency_ms": 87.4,
+        "latency_ms": 92.4,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 6355,
+        "chars": 6480,
         "tool_calls": 2,
-        "map_chars": 5258,
+        "map_chars": 5383,
         "followed": [
           "App.make_config"
         ],
-        "latency_ms": 94.2
+        "latency_ms": 92.3
       },
       "oracle": {
         "file": null,
@@ -804,7 +804,7 @@
           "enforce",
           "style"
         ],
-        "latency_ms": 5.9
+        "latency_ms": 6.5
       },
       "baseline_targeted": {
         "pass": false,
@@ -823,7 +823,7 @@
           "enforce",
           "style"
         ],
-        "latency_ms": 14.6
+        "latency_ms": 15.2
       },
       "knock": {
         "pass": true,
@@ -835,7 +835,7 @@
           "README.md",
           "pyproject.toml"
         ],
-        "latency_ms": 47.6,
+        "latency_ms": 59.2,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -844,13 +844,13 @@
           "ruff",
           "force-single-line"
         ],
-        "chars": 6155,
+        "chars": 7567,
         "tool_calls": 2,
         "map_chars": 5136,
         "followed": [
-          "prepare_import"
+          "ScriptInfo.load_app"
         ],
-        "latency_ms": 59.7
+        "latency_ms": 60.5
       },
       "oracle": {
         "file": "pyproject.toml",

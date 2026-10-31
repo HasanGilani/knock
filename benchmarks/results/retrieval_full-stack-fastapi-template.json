@@ -11,7 +11,7 @@
   },
   "task_set_role": "held-out set: tasks were written and checked against the repository before knock was run on it, and knock was not changed after seeing these results",
   "ingestion": {
-    "cold_index_ms": 320,
+    "cold_index_ms": 329,
     "noop_refresh_ms": 28,
     "files_indexed": 196,
     "files_reprocessed_on_noop": 0,
@@ -39,23 +39,23 @@
   "knock": {
     "passed": 11,
     "tasks": 12,
-    "total_chars": 79663,
-    "median_chars": 4333.5,
+    "total_chars": 79662,
+    "median_chars": 4333.0,
     "est_total_tokens": 19916,
     "total_tool_calls": 15
   },
   "knock_map": {
     "passed": 9,
     "tasks": 12,
-    "total_chars": 29970,
+    "total_chars": 30252,
     "median_chars": 2301.5,
-    "est_total_tokens": 7493,
+    "est_total_tokens": 7563,
     "total_tool_calls": 15
   },
   "oracle_total_chars": 160947,
   "cache": {
-    "repeat_context_ms_median": 21.4,
-    "first_context_ms_median": 41.05,
+    "repeat_context_ms_median": 21.37,
+    "first_context_ms_median": 39.75,
     "repeat_hits": 12,
     "metrics": {
       "hits": 12,
@@ -127,7 +127,7 @@
           "frontend",
           "backend"
         ],
-        "latency_ms": 14.9
+        "latency_ms": 15.1
       },
       "knock": {
         "pass": true,
@@ -136,17 +136,17 @@
         "tool_calls": 1,
         "context_chars": 3128,
         "followed_sources": [],
-        "latency_ms": 52.4,
+        "latency_ms": 52.7,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 1745,
+        "chars": 2148,
         "tool_calls": 1,
-        "map_chars": 1745,
+        "map_chars": 2148,
         "followed": [],
-        "latency_ms": 45.8
+        "latency_ms": 59.5
       },
       "oracle": {
         "file": "README.md",
@@ -173,7 +173,7 @@
           "routers",
           "backend"
         ],
-        "latency_ms": 7.6
+        "latency_ms": 8.3
       },
       "baseline_targeted": {
         "pass": false,
@@ -192,7 +192,7 @@
           "routers",
           "backend"
         ],
-        "latency_ms": 15.5
+        "latency_ms": 15.2
       },
       "knock": {
         "pass": true,
@@ -201,17 +201,17 @@
         "tool_calls": 1,
         "context_chars": 5885,
         "followed_sources": [],
-        "latency_ms": 47.9,
+        "latency_ms": 47.5,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 1572,
+        "chars": 1620,
         "tool_calls": 1,
-        "map_chars": 1572,
+        "map_chars": 1620,
         "followed": [],
-        "latency_ms": 44.0
+        "latency_ms": 43.9
       },
       "oracle": {
         "file": "backend/app/api/main.py",
@@ -252,7 +252,7 @@
           "recovery",
           "password"
         ],
-        "latency_ms": 11.4
+        "latency_ms": 11.5
       },
       "knock": {
         "pass": true,
@@ -261,7 +261,7 @@
         "tool_calls": 1,
         "context_chars": 4033,
         "followed_sources": [],
-        "latency_ms": 28.4,
+        "latency_ms": 28.2,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -271,7 +271,7 @@
         "tool_calls": 1,
         "map_chars": 2279,
         "followed": [],
-        "latency_ms": 31.9
+        "latency_ms": 33.6
       },
       "oracle": {
         "file": "backend/app/api/routes/login.py",
@@ -298,7 +298,7 @@
           "jwt",
           "created"
         ],
-        "latency_ms": 6.1
+        "latency_ms": 6.3
       },
       "baseline_targeted": {
         "pass": false,
@@ -316,7 +316,7 @@
           "jwt",
           "created"
         ],
-        "latency_ms": 15.6
+        "latency_ms": 15.7
       },
       "knock": {
         "pass": true,
@@ -325,7 +325,7 @@
         "tool_calls": 1,
         "context_chars": 5555,
         "followed_sources": [],
-        "latency_ms": 39.7,
+        "latency_ms": 39.8,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -335,7 +335,7 @@
         "tool_calls": 1,
         "map_chars": 1426,
         "followed": [],
-        "latency_ms": 35.5
+        "latency_ms": 36.5
       },
       "oracle": {
         "file": "backend/app/core/security.py",
@@ -360,7 +360,7 @@
           "certificates",
           "application"
         ],
-        "latency_ms": 4.9
+        "latency_ms": 4.8
       },
       "baseline_targeted": {
         "pass": true,
@@ -385,7 +385,7 @@
         "tool_calls": 1,
         "context_chars": 3867,
         "followed_sources": [],
-        "latency_ms": 36.0,
+        "latency_ms": 36.7,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -395,7 +395,7 @@
         "tool_calls": 1,
         "map_chars": 2324,
         "followed": [],
-        "latency_ms": 30.9
+        "latency_ms": 31.8
       },
       "oracle": {
         "file": "development.md",
@@ -445,17 +445,17 @@
         "tool_calls": 1,
         "context_chars": 7572,
         "followed_sources": [],
-        "latency_ms": 39.6,
+        "latency_ms": 39.7,
         "freshness": "fresh"
       },
       "knock_map": {
         "pass": true,
         "missing": [],
-        "chars": 3564,
+        "chars": 3577,
         "tool_calls": 1,
-        "map_chars": 3564,
+        "map_chars": 3577,
         "followed": [],
-        "latency_ms": 45.0
+        "latency_ms": 46.6
       },
       "oracle": {
         "file": "backend/scripts/test.sh",
@@ -480,7 +480,7 @@
           "running",
           "development"
         ],
-        "latency_ms": 7.1
+        "latency_ms": 7.2
       },
       "baseline_targeted": {
         "pass": true,
@@ -496,7 +496,7 @@
           "running",
           "development"
         ],
-        "latency_ms": 15.3
+        "latency_ms": 15.1
       },
       "knock": {
         "pass": true,
@@ -507,7 +507,7 @@
         "followed_sources": [
           "backend/README.md"
         ],
-        "latency_ms": 54.1,
+        "latency_ms": 58.3,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -521,7 +521,7 @@
         "followed": [
           "run_migrations_offline"
         ],
-        "latency_ms": 49.7
+        "latency_ms": 50.1
       },
       "oracle": {
         "file": "backend/README.md",
@@ -548,7 +548,7 @@
           "broken",
           "something"
         ],
-        "latency_ms": 6.8
+        "latency_ms": 6.7
       },
       "baseline_targeted": {
         "pass": false,
@@ -566,7 +566,7 @@
           "broken",
           "something"
         ],
-        "latency_ms": 13.1
+        "latency_ms": 13.4
       },
       "knock": {
         "pass": true,
@@ -575,7 +575,7 @@
         "tool_calls": 1,
         "context_chars": 4416,
         "followed_sources": [],
-        "latency_ms": 40.2,
+        "latency_ms": 35.5,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -590,7 +590,7 @@
         "followed": [
           "init_db"
         ],
-        "latency_ms": 42.8
+        "latency_ms": 41.7
       },
       "oracle": {
         "file": "development.md",
@@ -631,7 +631,7 @@
           "explicitly",
           "deployment"
         ],
-        "latency_ms": 13.6
+        "latency_ms": 13.5
       },
       "knock": {
         "pass": true,
@@ -640,7 +640,7 @@
         "tool_calls": 1,
         "context_chars": 1547,
         "followed_sources": [],
-        "latency_ms": 33.5,
+        "latency_ms": 34.4,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -650,7 +650,7 @@
         "tool_calls": 1,
         "map_chars": 550,
         "followed": [],
-        "latency_ms": 29.0
+        "latency_ms": 30.7
       },
       "oracle": {
         "file": "docker-compose.override.yml",
@@ -675,7 +675,7 @@
           "empty",
           "cors"
         ],
-        "latency_ms": 7.9
+        "latency_ms": 7.5
       },
       "baseline_targeted": {
         "pass": true,
@@ -691,16 +691,16 @@
           "empty",
           "cors"
         ],
-        "latency_ms": 14.8
+        "latency_ms": 14.6
       },
       "knock": {
         "pass": true,
         "missing": [],
-        "chars": 4251,
+        "chars": 4250,
         "tool_calls": 1,
-        "context_chars": 4251,
+        "context_chars": 4250,
         "followed_sources": [],
-        "latency_ms": 48.9,
+        "latency_ms": 49.8,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -710,7 +710,7 @@
         "tool_calls": 1,
         "map_chars": 672,
         "followed": [],
-        "latency_ms": 43.6
+        "latency_ms": 44.5
       },
       "oracle": {
         "file": "backend/app/core/config.py",
@@ -735,7 +735,7 @@
           "changes",
           "must"
         ],
-        "latency_ms": 7.6
+        "latency_ms": 7.8
       },
       "baseline_targeted": {
         "pass": false,
@@ -753,7 +753,7 @@
           "changes",
           "must"
         ],
-        "latency_ms": 15.0
+        "latency_ms": 15.2
       },
       "knock": {
         "pass": false,
@@ -769,7 +769,7 @@
           "frontend/src/components/UserSettings/ChangePassword.tsx",
           "deployment.md"
         ],
-        "latency_ms": 62.0,
+        "latency_ms": 59.6,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -779,13 +779,13 @@
           "mypy",
           "biome"
         ],
-        "chars": 4581,
+        "chars": 4399,
         "tool_calls": 2,
-        "map_chars": 3205,
+        "map_chars": 3023,
         "followed": [
           "ChangePassword"
         ],
-        "latency_ms": 49.0
+        "latency_ms": 57.2
       },
       "oracle": {
         "file": "release-notes.md",
@@ -829,7 +829,7 @@
           "migration",
           "database"
         ],
-        "latency_ms": 16.1
+        "latency_ms": 16.2
       },
       "knock": {
         "pass": true,
@@ -838,7 +838,7 @@
         "tool_calls": 1,
         "context_chars": 3219,
         "followed_sources": [],
-        "latency_ms": 41.9,
+        "latency_ms": 39.3,
         "freshness": "fresh"
       },
       "knock_map": {
@@ -848,7 +848,7 @@
         "tool_calls": 1,
         "map_chars": 2549,
         "followed": [],
-        "latency_ms": 42.5
+        "latency_ms": 43.2
       },
       "oracle": {
         "file": "backend/README.md",

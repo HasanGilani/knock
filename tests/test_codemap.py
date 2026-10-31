@@ -117,3 +117,44 @@ def test_map_toolset_over_mcp(indexed, config):
     assert "def total_price" in o.content[0].text
     assert r.content[0].text.startswith("saved k_")
     assert bad.is_error and "Traceback" not in bad.content[0].text
+
+
+def test_change_request_detection():
+    from knock.codemap import is_change_request
+
+    assert is_change_request("Add a debug log when verification fails")
+    assert is_change_request("Ops wants visibility: when the job runs, log how many items it queued.")
+    assert not is_change_request("Why do users get logged out after we rotate the key?")
+    assert not is_change_request("I'm adding a config key. Where do the defaults live?")
+
+
+def test_edit_mode_map_gives_read_range_and_local_patterns(make_repo, service):
+    root = make_repo({
+        "README.md": "# Jobs\n\nBackground jobs for the shop.\n",
+        "shop/jobs.py": (
+            '"""Background jobs."""\n'
+            "import logging\n\n"
+            "logger = logging.getLogger(__name__)\n\n\n"
+            "def purge_carts(carts):\n"
+            '    """Delete abandoned carts."""\n'
+            "    removed = [c for c in carts if c.abandoned]\n"
+            '    logger.info("Purged %d carts.", len(removed))\n'
+            "    return removed\n\n\n"
+            "def queue_reminders(carts):\n"
+            "    for cart in carts:\n"
+            "        send_reminder(cart)\n\n\n"
+            "def send_reminder(cart):\n"
+            "    cart.notify()\n"
+        ),
+    })
+    rid = service.register(str(root))["id"]
+    service.refresh_repository(rid)
+    text = service.code_map("When the reminder job runs, log how many carts it queued reminders for.", repository=rid)
+    assert "· change request" in text.splitlines()[0]
+    assert "queue_reminders(carts)" in text
+    assert 'shop/jobs.py:10: logger.info("Purged %d carts.", len(removed))' in text   # a real usage, not the import
+    assert "import logging" not in text and "Delete abandoned carts" not in text.split("Existing patterns")[1]
+    assert "To edit: Read shop/jobs.py with offset" in text
+    assert "Docs & config" not in text
+    question = service.code_map("How are abandoned carts purged?", repository=rid)
+    assert "change request" not in question and "To edit" not in question
