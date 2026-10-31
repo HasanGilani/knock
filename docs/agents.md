@@ -24,7 +24,7 @@ knock serve --repo /path/to/repo [--repo /path/to/other] [--no-refresh]
 From the repository you want to work on:
 
 ```bash
-claude mcp add knock -- /absolute/path/to/knock/.venv/bin/knock serve --repo .
+claude mcp add knock -- /absolute/path/to/knock/.venv/bin/knock serve --repo . --toolset map
 ```
 
 Or commit a project-scoped `.mcp.json` (each user needs `knock` on their `PATH`):

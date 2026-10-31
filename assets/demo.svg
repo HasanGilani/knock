@@ -1,72 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 548" width="860" height="548" role="img" aria-label="A real Claude Code session: Claude asks knock for context first, reads only the relevant lines of src/flask/sessions.py, and answers in 8 turns without opening a whole file">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 660" width="920" height="660" role="img" aria-label="Side by side: the same Saleor investigation in Claude Code without knock (30 tool calls, 3 min 22 s, $0.49) and with knock (13 tool calls, 1 min 16 s, $0.25). Real recorded sessions.">
   <style>
-    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 13px; white-space: pre; }
+    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 12px; white-space: pre; }
     .w { fill: #e6edf3; } .g { fill: #8b949e; } .d { fill: #6e7681; } .or { fill: #d97757; } .ok { fill: #3fb950; }
-    .tool { fill: #e6edf3; font-weight: 700; } .path { fill: #ffa657; } .hi { fill: #f2cc60; } .b { font-weight: 700; }
+    .b { font-weight: 700; } .big { font-size: 22px; font-weight: 700; } .h { font-size: 14px; font-weight: 700; }
+    .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
   </style>
-  <rect x="0.5" y="0.5" width="859" height="547" rx="12" fill="#0d1117" stroke="#30363d"/>
-  <circle cx="22" cy="20" r="6" fill="#ff5f57"/><circle cx="42" cy="20" r="6" fill="#febc2e"/><circle cx="62" cy="20" r="6" fill="#28c840"/>
-  <text x="430" y="25" text-anchor="middle" class="g">claude — ~/code/flask</text>
-  <line x1="0" y1="40" x2="860" y2="40" stroke="#21262d"/>
+  <rect x="0.5" y="0.5" width="919" height="659" rx="12" fill="#0d1117" stroke="#30363d"/>
+  <rect width="0" height="0"><animate id="t" attributeName="width" from="0" to="0" dur="16s" begin="0s;t.end"/></rect>
+  <text x="24" y="30" class="g">Same task, same model (claude-sonnet-5), same repository: Saleor, 4,776 files</text>
+  <rect x="20" y="42" width="880" height="50" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="34" y="62"><tspan class="g">&gt; </tspan><tspan class="w">In one of our channels, fully paid checkouts never turn into orders automatically, even though</tspan></text>
+  <text x="34" y="80" class="w">  automatic completion is enabled. What decides which checkouts get completed automatically, and where is that code?</text>
 
-  <!-- master clock: restart every 18 s -->
-  <rect width="0" height="0"><animate id="t" attributeName="width" from="0" to="0" dur="18s" begin="0s;t.end"/></rect>
+  <rect x="20" y="106" width="430" height="430" rx="8" fill="none" stroke="#30363d"/>
+  <rect x="470" y="106" width="430" height="430" rx="8" fill="none" stroke="#d97757"/>
+  <text x="34" y="130" class="h sans w">Claude Code</text>
+  <text x="484" y="130" class="h sans or">Claude Code + knock</text>
 
-  <!-- welcome box -->
-  <rect x="20" y="52" width="820" height="54" rx="6" fill="none" stroke="#d97757"/>
-  <text x="36" y="74"><tspan class="or b">✻ Claude Code</tspan></text>
-  <text x="36" y="95" class="g">cwd: ~/code/flask   ·   MCP: knock <tspan class="ok">✔ connected</tspan></text>
-
-  <!-- prompt (typed) -->
-  <defs>
-    <clipPath id="typed"><rect x="0" y="118" height="64" width="0"><set attributeName="width" to="0" begin="t.begin"/><animate attributeName="width" from="0" to="860" dur="1.6s" begin="t.begin+0.4s" fill="freeze"/></rect></clipPath>
-  </defs>
-  <rect x="20" y="118" width="820" height="62" rx="6" fill="#161b22" stroke="#30363d"/>
-  <g clip-path="url(#typed)">
-    <text x="36" y="143"><tspan class="g">&gt; </tspan><tspan class="w">Sessions signed with an old key in SECRET_KEY_FALLBACKS get rejected after we rotate</tspan></text>
-    <text x="36" y="165" class="w">  SECRET_KEY. Where is the fallback key handling, and what should I check?</text>
-  </g>
-
-  <!-- 1. knock first -->
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.5s"/>
-    <text x="24" y="208"><tspan class="ok">⏺ </tspan><tspan class="tool">knock - get_context</tspan><tspan class="g"> (MCP)(task: "Session cookie signing rejects tokens signed with old…")</tspan></text>
-  </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+3.3s"/>
-    <text x="24" y="230"><tspan class="d">  ⎿  </tspan><tspan class="path">sessions.py:317</tspan><tspan class="w"> get_signing_serializer · </tspan><tspan class="hi">fb54159861</tspan><tspan class="w"> "fix key list ordering" · </tspan><tspan class="ok">fresh</tspan><tspan class="d"> · 70 ms</tspan></text>
-  </g>
-
-  <!-- 2. read only the relevant lines -->
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.2s"/>
-    <text x="24" y="256"><tspan class="ok">⏺ </tspan><tspan class="tool">knock - get_source</tspan><tspan class="g"> (MCP)(path: "src/flask/sessions.py", start_line: 290, end_line: 345)</tspan></text>
-  </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.8s"/>
-    <text x="24" y="278"><tspan class="d">  ⎿  </tspan><tspan class="w">56 lines</tspan><tspan class="g"> of a 399-line file</tspan></text>
-  </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.5s"/>
-    <text x="24" y="304"><tspan class="ok">⏺ </tspan><tspan class="tool">Bash</tspan><tspan class="g">(git show fb54159861 -- src/flask/sessions.py CHANGES.rst | head -150)</tspan></text>
-    <text x="24" y="326" class="d">  ⎿  … +2 more read-only commands (grep docs/config.rst, git log sessions.py)</text>
-  </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+6.3s"/>
-    <text x="24" y="352"><tspan class="ok">⏺ </tspan><tspan class="tool">knock - get_source</tspan><tspan class="g"> (MCP)(path: "src/flask/sessions.py", start_line: 337, end_line: 360)</tspan></text>
-  </g>
-
-  <!-- 3. the answer -->
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+7.4s"/>
-    <text x="24" y="382"><tspan class="w">⏺ This repo already has the fix for exactly this bug (commit </tspan><tspan class="hi">fb54159861</tspan><tspan class="w">, "secret key</tspan></text>
-    <text x="24" y="403" class="w">  rotation: fix key list ordering", included since Flask 3.1.1).</text>
-  </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+8.1s"/>
-    <text x="24" y="429"><tspan class="w b">  Where it lives: </tspan><tspan class="w">SecureCookieSessionInterface.get_signing_serializer in</tspan></text>
-    <text x="24" y="450"><tspan class="path">  src/flask/sessions.py:317-335</tspan><tspan class="w">, called from open_session (sessions.py:337-349).</tspan></text>
-  </g>
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+8.8s"/>
-    <text x="24" y="476"><tspan class="w b">  What to check: </tspan><tspan class="w">1. Flask ≥ 3.1.1   2. SECRET_KEY_FALLBACKS is a list, not a raw</tspan></text>
-    <text x="24" y="497" class="w">  string from an env var   3. the old key's exact value and encoding   …</text>
-  </g>
-
-  <!-- footer -->
-  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+9.8s"/>
-    <line x1="20" y1="512" x2="840" y2="512" stroke="#21262d"/>
-    <text x="24" y="533" class="g">real session · 8 turns · 51 s · <tspan class="ok">0 whole files read</tspan> · knock asked first, answered in 70 ms</text>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+0.80s"/>
+    <text x="34" y="156"><tspan class="w b">Agent</tspan><tspan class="g"> → sub-agent: "Find automatic checkout completion…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+1.22s"/>
+    <text x="34" y="178"><tspan class="w b">Grep</tspan><tspan class="g"> automatically_complete|automatic_checkout_completi…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+1.64s"/>
+    <text x="34" y="200"><tspan class="w b">Grep</tspan><tspan class="g"> automatically_fulfill_non_shippable_gift_card|…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.06s"/>
+    <text x="34" y="222"><tspan class="w b">Grep</tspan><tspan class="g"> automatically_complete_fully_paid_checkouts  model…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.48s"/>
+    <text x="34" y="244"><tspan class="w b">Read</tspan><tspan class="g"> saleor/checkout/tasks.py</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.90s"/>
+    <text x="34" y="266"><tspan class="w b">Grep ×2</tspan><tspan class="g"> class CheckoutAuthorizeStatus · def is_fully_pa…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+3.32s"/>
+    <text x="34" y="288"><tspan class="w b">Grep ×5</tspan><tspan class="g"> authorize_status  (fetch.py, payment/utils.py…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+3.74s"/>
+    <text x="34" y="310"><tspan class="w b">Read</tspan><tspan class="g"> saleor/checkout/payment_utils.py</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.16s"/>
+    <text x="34" y="332"><tspan class="w b">Grep ×2</tspan><tspan class="g"> update_checkout_payment_statuses · trigger_auto…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.58s"/>
+    <text x="34" y="354"><tspan class="w b">Read ×3</tspan><tspan class="g"> saleor/settings.py  (L745, L1015, L1105)</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.00s"/>
+    <text x="34" y="376"><tspan class="w b">Grep · Read ×2</tspan><tspan class="g"> saleor/core/schedules.py</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.42s"/>
+    <text x="34" y="398"><tspan class="w b">Read ×2</tspan><tspan class="g"> saleor/checkout/actions.py</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.84s"/>
+    <text x="34" y="420"><tspan class="w b">Read ×2</tspan><tspan class="g"> channel/models.py · graphql/channel/mutations/u…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+6.26s"/>
+    <text x="34" y="442"><tspan class="w b">Grep · Read</tspan><tspan class="g"> is_automatic_completion · checkout/tests/te…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+6.68s"/>
+    <text x="34" y="464"><tspan class="w b">ls · Read ×2</tspan><tspan class="g"> channel/migrations/0025_…, 0026_…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+0.80s"/>
+    <text x="484" y="156"><tspan class="or b">ToolSearch</tspan><tspan class="g"> load knock's tools</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+1.22s"/>
+    <text x="484" y="178"><tspan class="or b">map</tspan><tspan class="g"> "What decides whether a fully paid checkout is auto…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+1.64s"/>
+    <text x="484" y="200"><tspan class="or b">map</tspan><tspan class="g"> "Find the celery task / beat schedule that queries…"</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.06s"/>
+    <text x="484" y="222"><tspan class="or b">open</tspan><tspan class="g"> trigger_automatic_checkout_completion_task</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.48s"/>
+    <text x="484" y="244"><tspan class="or b">open</tspan><tspan class="g"> automatic_checkout_completion_task</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+2.90s"/>
+    <text x="484" y="266"><tspan class="or b">map</tspan><tspan class="g"> "How are authorize_status and charge_status compute…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+3.32s"/>
+    <text x="484" y="288"><tspan class="or b">open</tspan><tspan class="g"> saleor/checkout/payment_utils.py:1-120</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+3.74s"/>
+    <text x="484" y="310"><tspan class="or b">open</tspan><tspan class="g"> clean_automatic_completion</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.16s"/>
+    <text x="484" y="332"><tspan class="or b">open</tspan><tspan class="g"> clean_automatic_completion_cut_off_date</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+4.58s"/>
+    <text x="484" y="354"><tspan class="or b">grep</tspan><tspan class="g"> AUTOMATIC_CHECKOUT_COMPLETION_OLDEST_MODIFIED</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.00s"/>
+    <text x="484" y="376"><tspan class="or b">grep</tspan><tspan class="g"> cut_off_date|cutOffDate  graphql/channel/types.py</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.42s"/>
+    <text x="484" y="398"><tspan class="or b">Read</tspan><tspan class="g"> saleor/graphql/channel/types.py</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+5.84s"/>
+    <text x="484" y="420"><tspan class="or b">remember</tspan><tspan class="g"> "Automatic completion silently excludes pre-ex…</tspan></text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+7.50s"/>
+    <line x1="34" y1="490" x2="436" y2="490" stroke="#30363d"/>
+    <text x="34" y="522" class="big w">30 calls · 3m 22s · $0.49</text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+6.66s"/>
+    <line x1="484" y1="490" x2="886" y2="490" stroke="#30363d"/>
+    <text x="484" y="522" class="big ok">13 calls · 1m 16s · $0.25</text></g>
+  <g opacity="0"><set attributeName="opacity" to="0" begin="t.begin"/><set attributeName="opacity" to="1" begin="t.begin+8.30s"/>
+    <text x="24" y="566" class="w sans" style="font-size:15px"><tspan class="ok b">−49% cost, 2.7× less model time</tspan> on this investigation. Both answers were correct (task, 30-day limit, cut-off date).</text>
+    <text x="24" y="592" class="g sans" style="font-size:13px">Over investigate-then-edit (two sessions): median $0.70 without knock vs $0.43 with knock (−39%).</text>
+    <text x="24" y="614" class="d sans" style="font-size:12px">Real recorded sessions, abridged · runs shown are each side's median-cost run of 3 · "model time" excludes tool execution · details: docs/benchmark.md</text>
   </g>
 </svg>

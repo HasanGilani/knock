@@ -12,9 +12,9 @@
 ![100% local](https://img.shields.io/badge/runs-100%25%20local-2ea44f)
 ![No API key needed](https://img.shields.io/badge/API%20key-not%20needed-2ea44f)
 
-<img src="assets/demo.svg" alt="A Claude Code session where Claude calls knock's get_context first, reads only the relevant lines of src/flask/sessions.py, and answers in 8 turns" width="100%">
+<img src="assets/demo.svg" alt="Side by side: the same investigation in Saleor (4,776 files). Claude Code alone: a sub-agent makes 30 tool calls, 3 min 22 s of model time, $0.49. Claude Code with knock: 13 tool calls, 1 min 16 s, $0.25. Both answers correct." width="100%">
 
-<sub>A real Claude Code session on <a href="https://github.com/pallets/flask">Flask</a> 3.1.2, abridged (two shell commands collapsed into one line). Claude asked knock first, then read only the lines it needed.</sub>
+<sub>Two real Claude Code sessions on <a href="https://github.com/saleor/saleor">Saleor</a>, abridged: each side's median-cost run out of three. Results vary between runs and repositories; on a small, well-known repo the difference was within noise. Full numbers: <a href="docs/benchmark.md">docs/benchmark.md</a>.</sub>
 
 </div>
 
@@ -26,10 +26,10 @@ Every new chat with a coding agent starts with amnesia. To answer *"where is X?"
 
 | | 😩 Without knock | 😎 With knock |
 |---|---|---|
-| **First move** | `grep` around, open 3 whole files | one `get_context` call |
+| **First move** | `grep` around, open whole files, or spawn a sub-agent to explore | one `map` call: the relevant code as a skeleton with exact line ranges |
 | **Text the agent reads** | ~27,000–118,000 characters per question | ~4,300 characters per question |
 | **Finds "why did we do it this way?"** | only if it opens the right doc | decisions and their rationale come back with the answer |
-| **Remembers yesterday's bug hunt** | ❌ | ✅ agents save findings with `record_knowledge` |
+| **Remembers yesterday's bug hunt** | ❌ | ✅ agents save findings with `remember` |
 | **Knows when its notes are outdated** | — | ✅ every answer says `fresh` or `stale` |
 
 <sub>Median characters per task on the <a href="docs/benchmark.md">held-out benchmark</a> (targeted-grep and grep-and-read baselines vs knock). Fewer characters ≠ an identical cut in your bill; see the <a href="#-faq">FAQ</a>.</sub>
@@ -51,14 +51,16 @@ From inside the project you work on, for **Claude Code** (in the same terminal a
 
 ```bash
 cd ~/code/my-project
-claude mcp add knock -- "$(which knock)" serve --repo .
+claude mcp add knock -- "$(which knock)" serve --repo . --toolset map
 ```
+
+`--toolset map` gives the agent three tools (`map`, `open`, `remember`) and is the setup measured in the results below. Leave it out to get the original eight tools.
 
 That's the whole setup. The next time you open Claude Code in that project, knock reads the project and builds its notes automatically. This takes a few seconds the first time; after that it only re-reads files that changed.
 
 > [!TIP]
 > Add this line to your project's `CLAUDE.md` so the agent uses knock when it pays off:
-> *"Before exploring the repo (how/why questions, unclear bugs, changes across modules, code you can't find with one search), call knock's `get_context`. For small edits you can locate with one grep, skip it. Save reusable findings with `record_knowledge`."*
+> *"Before exploring the repo (how/why questions, unclear bugs, changes across modules, code you can't find with one search), call knock's `map` tool with your task. For small edits you can locate with one grep, skip it. Save non-obvious findings with `remember`."*
 >
 > In our recordings, knock saved money on investigations in a large codebase but added a small cost to quick edits, so this line matters.
 
@@ -71,7 +73,7 @@ Ask your agent what you'd always ask. Here's what changes behind the scenes:
 | *"Add rate limiting to the login endpoint"* | asks knock first and gets the login handler's `file:line`, your middleware conventions and the test setup, then opens only those lines |
 | *"Why do we use Postgres instead of Mongo?"* | gets the decision and its reasoning from your docs or ADRs, with a link to the source |
 | *"Tests fail with a Redis error, any idea?"* | finds the finding a previous session saved: *"login tests need Redis running"* |
-| *(after it figures something out)* | saves it with `record_knowledge`, so tomorrow's session already knows |
+| *(after it figures something out)* | saves it with `remember`, so tomorrow's session already knows |
 
 Nothing to maintain: when code changes, knock updates its notes, and flags anything that may be outdated.
 
@@ -80,10 +82,12 @@ Nothing to maintain: when code changes, knock updates its notes, and flags anyth
 
 <br>
 
-You never *need* these, but they're handy. They're also what the demo at the top shows.
+You never *need* these, but they're handy.
 
 | Command | When you'd use it |
 |---|---|
+| `knock map "where are expired checkouts cleaned up?"` | see the same code map your agent gets |
+| `knock open SomeClass.method` | exact code for a symbol, with its callers and callees |
 | `knock context "how do we deploy?"` | ask a question yourself, e.g. when onboarding onto an unfamiliar repo |
 | `knock search "rate limit"` | look up what knock knows about a topic |
 | `knock status` | check how fresh the notes are and how much knock knows |
@@ -105,7 +109,7 @@ Commit a `.mcp.json` file to your repo, and every teammate's Claude Code picks u
 ```json
 {
   "mcpServers": {
-    "knock": { "command": "knock", "args": ["serve", "--repo", "."] }
+    "knock": { "command": "knock", "args": ["serve", "--repo", ".", "--toolset", "map"] }
   }
 }
 ```
@@ -120,9 +124,9 @@ Each person's notes live on their own machine. Sharing findings across a team is
 flowchart LR
     A["📁 Your repo<br/>code · docs · configs · git log"] -->|"knock index<br/>(only changed files)"| B["🗂️ Notes<br/>each one points to<br/>file + lines + hash"]
     B --> C[("💾 SQLite<br/>on your machine")]
-    C -->|"get_context"| D["🤖 Your agent"]
-    D -->|"get_source<br/>(verify the real lines)"| A
-    D -->|"record_knowledge<br/>(save what it learned)"| C
+    C -->|"map"| D["🤖 Your agent"]
+    D -->|"open / Read<br/>(verify the real lines)"| A
+    D -->|"remember<br/>(save what it learned)"| C
 ```
 
 1. **Index:** knock reads your repo *without running anything in it*. It writes short notes: what each module defines, what the docs say about setup and deployment, which tools and dependencies you use, why decisions were made, and which recent commits fixed bugs.
@@ -131,6 +135,19 @@ flowchart LR
 4. **Remember:** the agent saves what it learned. If those files change later, knock marks the note **stale** so nobody trusts outdated info.
 
 ## 🧰 What your agent gets
+
+With `--toolset map` (recommended):
+
+| Tool | | What it does |
+|---|---|---|
+| `map` | 🗺️ | **Use when you'd otherwise explore.** The code relevant to a task as a skeleton: signatures, exact line ranges, what each function uses and catches, who calls it; plus the history behind it and the docs that matter. For change requests, a lighter version with the exact range to read and existing code to copy. |
+| `open` | 📄 | Exact, line-numbered code for a function or class with its callers and callees, a line range, or a file's skeleton |
+| `remember` | ✍️ | Save a finding for future sessions; it's flagged automatically when the cited files change |
+
+<details>
+<summary><b>The original 8-tool set (default without <code>--toolset map</code>)</b></summary>
+
+<br>
 
 | Tool | | What it does |
 |---|---|---|
@@ -143,8 +160,10 @@ flowchart LR
 | `get_repository_status` | 🩺 | How fresh the index is, plus counts and stats |
 | `refresh_repository` | 🔄 | Re-index changed files (takes milliseconds, no AI calls) |
 
+</details>
+
 <details>
-<summary><b>👀 See a real example session</b></summary>
+<summary><b>👀 See a real example session (8-tool set, Flask)</b></summary>
 
 <br>
 
@@ -255,7 +274,8 @@ knock is an early **MVP** (v0.1). What works today and what's next:
 - [x] MCP server with 8 tools, caching and local metrics
 - [x] Reproducible benchmark with a held-out repo
 - [ ] Model-in-the-loop token and cost benchmark (harness ready)
-- [ ] Prototype: compact 3-tool "code map" (`--toolset map`), still being measured in real Claude Code sessions
+- [x] Compact 3-tool "code map" (`--toolset map`), measured in real Claude Code sessions on Flask and Saleor
+- [ ] Measure on more large repositories, and on private codebases
 - [ ] Smarter matching for synonyms, and indexing module-level variables
 - [ ] Optional AI-assisted extraction (opt-in, disclosed)
 - [ ] Sharing knowledge across a team
