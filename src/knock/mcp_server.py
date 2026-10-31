@@ -26,7 +26,9 @@ log = logs.get("mcp")
 INSTRUCTIONS = """\
 knock keeps persistent, source-grounded knowledge about this repository: architecture, decisions and their \
 rationale, dependencies, build/test/deploy workflows, conventions, implementation locations, and past debugging \
-findings. Use it before broad file exploration:
+findings. Use it when you would otherwise explore: questions about how something works or why, bugs whose \
+cause is unclear, or code you cannot locate with one search. For a small change in code you can find with a \
+single grep, skip knock and edit directly — it adds steps without saving any.
 
 1. get_context(task) first — a compact, ranked package for the task (knowledge, symbols, files to open, recent changes).
 2. search_knowledge(query) for specific follow-up questions; get_knowledge(id, include_evidence=true) for provenance.
@@ -65,7 +67,8 @@ def build_server(service: KnockService, toolset: str = "full") -> MCPServer:
         title="Get task context",
         annotations=_READ,
         description=(
-            "Start here for any task. Returns a compact, ranked context package for a natural-language task: relevant "
+            "Use before exploring (how/why questions, unclear bugs, unfamiliar code); skip for small edits one grep can locate. "
+            "Returns a compact, ranked context package for a natural-language task: relevant "
             "knowledge items (with source references, provenance and freshness), matching symbols with file:line, the "
             "files most worth opening, recent commits touching them, and explicit gaps where nothing is known. "
             "Bounded by max_chars. Does not rescan the repository or call any model."
@@ -207,7 +210,9 @@ def build_server(service: KnockService, toolset: str = "full") -> MCPServer:
 
 MAP_INSTRUCTIONS = """\
 knock gives you a structural map of this repository so you can skip most exploration. Call map(task) \
-first for any question or change: it returns the relevant functions and classes as signatures with exact \
+first when you would otherwise explore: questions about how or why something works, bugs whose cause is \
+unclear, changes spanning several modules, or code you cannot locate with one search. For a small change \
+in code a single grep finds, skip knock and edit directly — it adds steps without saving any. map returns the relevant functions and classes as signatures with exact \
 line ranges, what each one uses and catches, who calls it, the history behind it (commit messages, \
 decisions, findings saved by earlier sessions) and pointers into the docs. It re-indexes changed files \
 automatically. Then read exact code with open("Class.method") or open("path:start-end"), or with your own \
@@ -235,7 +240,8 @@ def build_map_server(service: KnockService) -> MCPServer:
         title="Map code for a task",
         annotations=_READ,
         description=(
-            "Call first. Returns the code relevant to a task as a compact structural map: functions and classes "
+            "Use instead of exploring: how/why questions, unclear bugs, multi-module changes, code you can't find with one "
+            "search. Skip it for small edits one grep can locate. Returns the code relevant to a task as a compact structural map: functions and classes "
             "with signatures, exact line ranges, what they use and catch, and who calls them; plus the why behind "
             "related changes (commit messages, decisions, earlier findings) and doc pointers. ~1-3K characters. "
             "Re-indexes changed files automatically."

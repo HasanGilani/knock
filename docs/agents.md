@@ -40,7 +40,9 @@ Or commit a project-scoped `.mcp.json` (each user needs `knock` on their `PATH`)
 Optionally, tell the agent when to use it, for example in `CLAUDE.md`:
 
 ```markdown
-Use the knock MCP tools before exploring the repository: call get_context with the task first, verify details
+Use the knock MCP tools when you would otherwise explore the repository (how/why questions, unclear bugs, changes
+across modules, code you can't find with one search); skip them for small edits you can locate with one grep.
+Call get_context with the task first, verify details
 with get_source before editing, and record reusable findings (root causes, non-obvious workflows, decisions) with
 record_knowledge, citing the files that support them.
 ```
@@ -70,7 +72,9 @@ Most clients accept the same shape:
 | `open(target)` | exact, line-numbered code for a symbol (`open_session`, `Class.method`) with what it calls and who calls it; or `path:start-end`; or a file's skeleton |
 | `remember(note, files?)` | saves a finding; `files` may be `"src/app.py"` or `"src/app.py:120-160"` strings |
 
-Suggested `CLAUDE.md` line: *"Before exploring the repo, call knock's map tool with your task. Save non-obvious findings with remember."*
+Suggested `CLAUDE.md` line: *"Before exploring the repo (how/why questions, unclear bugs, changes across modules, code you can't find with one search), call knock's map tool with your task. For small edits you can locate with one grep, skip it. Save non-obvious findings with remember."*
+
+Why the "skip it" part: in recorded Claude Code sessions, a small edit whose file one regex finds takes 3 steps without knock (grep, Read, Edit) and at least 4 with it (loading knock's tools, map, Read, Edit). On a multi-module investigation in a 4,776-file repository, knock cut the median cost from $0.49 to $0.29. See [benchmark.md](benchmark.md).
 
 The same views are available from the CLI: `knock map "task"` and `knock open <target>`.
 
@@ -93,7 +97,8 @@ Read tools are annotated `readOnlyHint: true`. Mutating tools are annotated `rea
 
 ## Good agent habits
 
-- Start with `get_context`. Open only the files it suggests, and only the lines you need.
+- Use knock when you'd otherwise explore: start with `get_context` (or `map`), then open only the files it suggests, and only the lines you need.
+- Skip knock for small edits whose location one search finds; it adds steps there without saving any.
 - Treat `stale` items and `freshness.state != "fresh"` as hints that need verifying. Call `refresh_repository` after editing files if you'll query again.
 - Record one fact per item. Cite sources. Never record secrets, speculation or temporary state.
 - When an item turns out to be wrong, `update_knowledge_status(..., "invalidate", reason)` it, or `record_knowledge(..., supersedes=[id])` with the correction.

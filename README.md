@@ -57,8 +57,10 @@ claude mcp add knock -- "$(which knock)" serve --repo .
 That's the whole setup. The next time you open Claude Code in that project, knock reads the project and builds its notes automatically. This takes a few seconds the first time; after that it only re-reads files that changed.
 
 > [!TIP]
-> Add this line to your project's `CLAUDE.md` so the agent checks knock first:
-> *"Before exploring the repo, call knock's `get_context`. Save reusable findings with `record_knowledge`."*
+> Add this line to your project's `CLAUDE.md` so the agent uses knock when it pays off:
+> *"Before exploring the repo (how/why questions, unclear bugs, changes across modules, code you can't find with one search), call knock's `get_context`. For small edits you can locate with one grep, skip it. Save reusable findings with `record_knowledge`."*
+>
+> In our recordings, knock saved money on investigations in a large codebase but added a small cost to quick edits, so this line matters.
 
 ### 3️⃣ Work normally
 
@@ -132,7 +134,7 @@ flowchart LR
 
 | Tool | | What it does |
 |---|---|---|
-| `get_context` | 🔎 | **Start here.** A ranked package for a task: notes, functions with `file:line`, files worth opening, related commits, and honest "nothing known about X" gaps |
+| `get_context` | 🔎 | **Start here when you'd otherwise explore.** A ranked package for a task: notes, functions with `file:line`, files worth opening, related commits, and honest "nothing known about X" gaps |
 | `search_knowledge` | 📚 | Search notes, filtered by category (architecture, decision, workflow, …) or folder |
 | `get_knowledge` | 🧾 | One note with full provenance: where it came from, when, and whether it is still current |
 | `get_source` | 📄 | Read real lines from a file, with secrets redacted. Only files knock indexed |
