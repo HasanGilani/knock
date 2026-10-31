@@ -39,7 +39,9 @@ MAX_PER_CLASS = 4
 NOTES_MAX_CHARS = 1_200
 OPEN_MAX_LINES = 120
 _IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
-_PERIPHERAL = re.compile(r"(^|/)(examples?|samples?|demos?|fixtures?|testdata|test_data|benchmarks?|docs?)(/|$)", re.I)
+_PERIPHERAL = re.compile(r"(^|/)(examples?|samples?|demos?|fixtures?|testdata|test_data|benchmarks?|docs?|\.[\w-]+)(/|$)", re.I)
+SEED_POOL = 2000   # FTS candidates scored per task; large repositories need a wide pool
+SEED_LIMIT = 60
 
 
 def code_identifiers(text: str) -> list[str]:
@@ -158,7 +160,9 @@ class CodeMap:
             cur.score += amount
             cur.why.add(reason)
 
-        for score, r in retrieval.score_symbols(self.conn, self.repo_id, task, pool=300)[:60]:
+        candidates = retrieval.score_symbols(self.conn, self.repo_id, task, pool=SEED_POOL)
+        candidates.sort(key=lambda x: (-x[0], x[1]["path"], x[1]["line"]))  # best first, not FTS order
+        for score, r in candidates[:SEED_LIMIT]:
             for s in self._rows("path=? AND name=? AND line=?", (r["path"], r["name"], r["line"])):
                 bump(s, score, "matches task")
         for ident in code_identifiers(task):
