@@ -175,6 +175,25 @@ Edit mode gives change requests a lighter map: an exact `Read` range and real us
 
 All 12 edits are correct and equivalent. Claude used the suggested `Read` ranges, and on Flask it read the suggested `app.py` logging lines instead of searching for them. Edit mode narrowed the gap but did not close it, and the reason is structural. Without knock, an edit whose file a single regex finds takes 3 calls (grep, Read, Edit). With knock, the minimum is 4: loading the MCP tools (a fixed Claude Code step), `map`, Read, Edit. **For small edits in code that one search can find, the agent should skip knock.** The win is in investigations: on Saleor the Monday saving ($0.20 per session) is about ten times the edit overhead ($0.02).
 
+## Latest knock vs plain Claude Code (both repositories, 2026-10-31)
+
+This run tests knock as on `main` at `ce7934d`: the code map, edit mode, and the guidance "use knock for exploration, skip it for small edits one grep can find". It covers the full two-day scenario on Saleor and Flask, with and without knock, 3 runs each, 24 sessions in one batch ($5.11 total). Claude got the guidance line rather than "always call knock first", and knock's memory carried over from Monday to Tuesday within each run. Medians, with ranges in brackets, as reported by Claude Code:
+
+| | without knock | with knock |
+|---|---|---|
+| **Saleor, two days per run** | $0.70 [$0.40–0.80] | **$0.43 [$0.34–0.51]** |
+| Saleor Monday (investigation) | $0.49 [$0.25–0.58] · 192 s API time | **$0.25 [$0.25–0.38] · 76 s** |
+| Saleor Tuesday (edit) | $0.16 [$0.13–0.31] | $0.14 [$0.09–0.18] |
+| **Flask, two days per run** | $0.31 [$0.23–0.41] | $0.27 [$0.25–0.47] |
+| Flask Monday | $0.22 [$0.15–0.33] | $0.20 [$0.16–0.39] |
+| Flask Tuesday | $0.09 [$0.08–0.09] | $0.07 [$0.07–0.09] |
+
+- **Correctness:** all 12 Monday answers named the function, the 30-day limit (Saleor) or the fixed key ordering (Flask), and all 12 edits are equivalent. (Grading now reads all of Claude's answer text. Reading only the final message wrongly flagged one knock answer, which ended with "Saved that as a finding".)
+- **Guidance followed:** Claude used knock for every Monday investigation (6/6). On Tuesday it skipped knock for all three Flask edits, and on Saleor, an unfamiliar codebase, it used knock in 2 of 3 runs.
+- **Saleor:** knock's two-day cost was about 39% lower (median $0.43 vs $0.70), and each knock run cost less than the median run without it. Without knock, Claude Code delegated two of the three Monday investigations to a sub-agent (29 tool calls each).
+- **Flask:** about 14% lower on the median, but the ranges overlap heavily, so this is not a clear difference. Tuesday's lower cost with knock comes from runs where knock was *not* used, so it is noise.
+- **Caveats:** 3 runs per condition. The Saleor scenario is not untuned (see above). Costs vary a lot between identical runs (Saleor Tuesday without knock: $0.13–0.31).
+
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
 This benchmark uses the same model, the same system prompt, the same 20-turn limit and the same starting state. The **baseline** gets `list_files`/`grep`/`read_file`. The **knock** condition gets the same tools plus `get_context`/`search_knowledge`/`get_knowledge`/`get_source`, served in-process by the same service the MCP server uses. The order of the two conditions alternates per task. Prompt caching is enabled identically in both conditions (top-level automatic `cache_control`).

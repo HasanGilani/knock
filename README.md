@@ -189,6 +189,7 @@ Measured with a reproducible benchmark: 12 engineering tasks per repo, covering 
 - **In real Claude Code sessions** (3 runs each), the result depends on the repository and the task:
   - **Flask** (small and well known): knock was break-even on a bug investigation and slightly *more* expensive on an easy edit, where its extra steps outweigh a single search.
   - **Saleor** (4,776 files, released days before the test), with the compact `map` toolset: on a multi-module investigation, knock cut the median cost from **$0.49 to $0.29** and model time from 170 s to 78 s, and every knock run was cheaper. On a follow-up edit whose file one regex search found, knock cost more ($0.14 vs $0.08).
+  - **Latest version** (adds edit mode and "skip knock for easy edits" guidance), over the full investigate-then-edit scenario: Saleor's median two-day cost fell from **$0.70 to $0.43 (−39%)**. On Flask it was $0.31 vs $0.27, within run-to-run noise. Claude followed the guidance: it used knock for every investigation and skipped it for all the Flask edits.
   - Details and caveats are in [docs/benchmark.md](docs/benchmark.md#large-repository-saleor-real-claude-code-sessions).
 - **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.
 - **Where knock missed:** wording mismatches ("linters" vs "lint") and module-level variables it doesn't index yet.
