@@ -136,6 +136,34 @@ What this does and doesn't show: knock doesn't pay off on small, well-known repo
   - On Tuesday, all three v2 sessions still searched for how the code base logs (`grep logger.debug`), which the map does not show.
   - Loading knock's tools costs one extra step per session (`ToolSearch`).
 
+## Large repository: Saleor (real Claude Code sessions)
+
+Saleor 3.23.45 (commit `e5b7e5f8`, released 2026-10-28): 4,776 files, 4,411 of them Python, about 23× Flask. It ships its own `CLAUDE.md`, which Claude Code loads in both conditions. knock indexed it in 76 s cold (0 model calls), 0.3 s for a no-op refresh, with an 80 MB database.
+
+The scenario uses the same two-day structure, built around automatic completion of fully paid checkouts. That logic spans a channel model, two Celery tasks, a custom beat schedule, settings and GraphQL validation. Answers were verified against the code before recording.
+- **Monday:** *"…fully paid checkouts never turn into orders automatically… some are a few weeks old. What decides which checkouts get completed automatically, and where is that code?"* (`trigger_automatic_checkout_completion_task` skips checkouts older than `AUTOMATIC_CHECKOUT_COMPLETION_OLDEST_MODIFIED`, 30 days, and applies each channel's delay and cut-off date.)
+- **Tuesday (new session):** *"…when the background job that auto-completes paid checkouts runs, log how many checkouts it queued for completion."*
+
+The setup was the same as before (`claude-sonnet-5`, 3 runs each, the same file tools, a fresh copy of the knock index per run). Medians, with ranges in brackets, as reported by Claude Code (2026-10-31):
+
+| | without knock | with knock v2 (`map`/`open`/`remember`) |
+|---|---|---|
+| Monday cost | $0.49 [$0.44–0.82] | **$0.29 [$0.15–0.34]** |
+| Monday model time (API) | 170 s [138–318] | **78 s [43–105]** |
+| Monday tool calls (incl. sub-agent) | 21 [19–40] | 11 [9–19] |
+| Monday answer named the function, 30-day limit, cut-off and delay | 2 of 3 | 3 of 3 |
+| Tuesday cost | **$0.08 [$0.07–0.14]** | $0.14 [$0.12–0.15] |
+| Tuesday tool calls | **3 [3–5]** | 8 [5–8] |
+
+All six Tuesday edits are equivalent (a counter plus a `task_logger.info` call in `trigger_automatic_checkout_completion_task`).
+
+**What happened:**
+- **Monday, knock wins.** Every knock run was cheaper than every run without it. Without knock, Claude Code delegated the search to a sub-agent that made 16–39 tool calls. With knock, `map` pointed straight at the task, the settings and the scheduler, and Claude confirmed with 2–3 `open` calls.
+- **Tuesday, knock loses.** Without knock, one regex search (`auto.?complet.*checkout`) found the file. Claude Code also has to read a file with its own Read tool before editing it, so knock's `map`/`open` calls were pure overhead, on top of one step to load knock's tools.
+- **Duration caveat:** Claude Code's reported session duration excludes sub-agent work (13–17 s for the no-knock Monday runs). The API time above is the comparable figure.
+
+**Caveats:** 3 runs per condition, one repository, one scenario. The map's seed-ranking bug was found and fixed while checking knock's output for these exact tasks before recording, so this scenario is not untuned. Across both days together, knock's median cost was about 24% lower ($0.43 vs $0.56); that number depends entirely on the mix of investigation and editing.
+
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
 This benchmark uses the same model, the same system prompt, the same 20-turn limit and the same starting state. The **baseline** gets `list_files`/`grep`/`read_file`. The **knock** condition gets the same tools plus `get_context`/`search_knowledge`/`get_knowledge`/`get_source`, served in-process by the same service the MCP server uses. The order of the two conditions alternates per task. Prompt caching is enabled identically in both conditions (top-level automatic `cache_control`).

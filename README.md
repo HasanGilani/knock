@@ -184,7 +184,10 @@ Measured with a reproducible benchmark: 12 engineering tasks per repo, covering 
 - **Flask** (used during development, so optimistic): knock 12/12 with 92K chars, baselines 7/12 with 2.1M and 247K chars.
 - **Speed:** a ~200-file repo indexes in 0.3–0.6 s; re-indexing with no changes takes ~30 ms.
 - **What this measures:** whether the facts *reached* the agent, not whether the agent then solved the task. The baselines are simulations of agent behaviour.
-- **In real Claude Code sessions** (Flask, 3 runs each): knock was break-even on a bug investigation and slightly *more* expensive on an easy follow-up task, where its extra steps outweigh a single search. Expect the benefit, if any, on larger or unfamiliar codebases; that hasn't been measured yet. Details in [docs/benchmark.md](docs/benchmark.md#claude-code-recordings-side-by-side).
+- **In real Claude Code sessions** (3 runs each), the result depends on the repository and the task:
+  - **Flask** (small and well known): knock was break-even on a bug investigation and slightly *more* expensive on an easy edit, where its extra steps outweigh a single search.
+  - **Saleor** (4,776 files, released days before the test), with the compact `map` toolset: on a multi-module investigation, knock cut the median cost from **$0.49 to $0.29** and model time from 170 s to 78 s, and every knock run was cheaper. On a follow-up edit whose file one regex search found, knock cost more ($0.14 vs $0.08).
+  - Details and caveats are in [docs/benchmark.md](docs/benchmark.md#large-repository-saleor-real-claude-code-sessions).
 - **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.
 - **Where knock missed:** wording mismatches ("linters" vs "lint") and module-level variables it doesn't index yet.
 
