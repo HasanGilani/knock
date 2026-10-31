@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 requires-python = ">=3.10"
-authors = [{ name = "knock contributors" }]
+authors = [{ name = "Hasan Gilani" }]
 keywords = ["mcp", "ai-agents", "knowledge-base", "code-intelligence", "sqlite"]
 classifiers = [
     "Development Status :: 3 - Alpha",
