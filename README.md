@@ -19,6 +19,8 @@
 
 <sub>Two real Claude Code sessions on <a href="https://github.com/saleor/saleor">Saleor</a>, abridged: each side's median-cost run out of three. Results vary between runs and repositories; on a small, well-known repo the difference was within noise. Full numbers: <a href="https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md">docs/benchmark.md</a>.</sub>
 
+📝 **The story behind the numbers: [I recorded 87 Claude Code sessions to find out where the money goes](https://dev.to/hasangilani/i-recorded-87-claude-code-sessions-to-find-out-where-the-money-goes-2i2k)**
+
 </div>
 
 ---
@@ -206,6 +208,8 @@ Measured with a reproducible benchmark: 12 engineering tasks per repo, covering 
   - **Flask** (small and well known): knock was break-even on a bug investigation and slightly *more* expensive on an easy edit, where its extra steps outweigh a single search.
   - **Saleor** (4,776 files, released days before the test), with the compact `map` toolset: on a multi-module investigation, knock cut the median cost from **$0.49 to $0.29** and model time from 170 s to 78 s, and every knock run was cheaper. On a follow-up edit whose file one regex search found, knock cost more ($0.14 vs $0.08).
   - **Latest version** (adds edit mode and "skip knock for easy edits" guidance), over the full investigate-then-edit scenario: Saleor's median two-day cost fell from **$0.70 to $0.43 (−39%)**. On Flask it was $0.31 vs $0.27, within run-to-run noise. Claude followed the guidance: it used knock for every investigation and skipped it for all the Flask edits.
+  - **Variance check** (8 runs per side on the Saleor investigation): median cost **$0.42 → $0.25 (−40%)**, 8/8 correct answers on both sides, and about half the spread. Without knock, Claude delegated to a sub-agent in 5 of 8 runs; with knock, in none.
+  - The full story, including the versions that lost: [I recorded 87 Claude Code sessions…](https://dev.to/hasangilani/i-recorded-87-claude-code-sessions-to-find-out-where-the-money-goes-2i2k).
   - Details and caveats are in [docs/benchmark.md](https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md#large-repository-saleor-real-claude-code-sessions).
 - **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.
 - **Where knock missed:** wording mismatches ("linters" vs "lint") and module-level variables it doesn't index yet.
