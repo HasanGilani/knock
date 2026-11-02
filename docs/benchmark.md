@@ -194,6 +194,26 @@ This run tests knock as on `main` at `ce7934d`: the code map, edit mode, and the
 - **Flask:** about 14% lower on the median, but the ranges overlap heavily, so this is not a clear difference. Tuesday's lower cost with knock comes from runs where knock was *not* used, so it is noise.
 - **Caveats:** 3 runs per condition. The Saleor scenario is not untuned (see above). Costs vary a lot between identical runs (Saleor Tuesday without knock: $0.13–0.31).
 
+## Variance check: Saleor investigation, 5 more runs per side (2026-11-02)
+
+Three runs per side is a small sample, and identical agent runs can differ a lot, so the Saleor investigation (the "Monday" question above) was recorded 5 more times per side with the same prompt, model, tools and guidance. Each knock run started from a fresh index with no saved memory. The order alternated per run, so neither side always went first. knock's code (`src/`) is unchanged since the batch above, so the two batches are pooled below. Each session ran `claude -p` with `--output-format stream-json`, as above. Cost and model time are as reported by Claude Code, and tool calls include a sub-agent's calls.
+
+| Saleor investigation | without knock | with knock |
+|---|---|---|
+| **New batch, 5 runs:** median cost | $0.41 [$0.22–0.65] | **$0.24 [$0.16–0.38]** (−42%) |
+| median model time | 122 s [82–208] | **89 s [50–104]** (1.4× less) |
+| median tool calls | 23 [8–37] | **13 [9–16]** |
+| **Pooled, 8 runs:** median cost | $0.42 [$0.22–0.65], sd $0.15 | **$0.25 [$0.16–0.38], sd $0.07** (−40%) |
+| median model time | 142 s [73–208], sd 53 s | **86 s [50–120], sd 22 s** (1.7× less) |
+| median tool calls | 26 [8–37], sd 11 | **13 [9–19], sd 3** |
+| correct answers | 8/8 | 8/8 |
+| delegated to a sub-agent | 5/8 | 0/8 |
+
+- **Cost:** knock's median was about 40% lower over 8 runs per side. The first batch's −49% was at the favorable end; −40% is the better estimate.
+- **Variance:** knock roughly halved the spread in cost (range $0.44 → $0.22) and model time (135 s → 70 s), and cut the spread in tool calls by about two thirds (29 → 10 calls). Without knock, the runs split into two kinds: Claude either delegated the search to a sub-agent (5 of 8 runs, 23–37 tool calls, $0.39–0.65) or searched directly (3 runs, 8–20 calls, $0.22–0.41). With knock, it never delegated.
+- **Not a win every time:** the cheapest run without knock ($0.22) cost less than the median with knock. One pair of runs can flatter either side, which is why these are medians.
+- **Model time:** the gap is smaller than the first batch suggested (1.7× pooled, not 2.5×).
+
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
 This benchmark uses the same model, the same system prompt, the same 20-turn limit and the same starting state. The **baseline** gets `list_files`/`grep`/`read_file`. The **knock** condition gets the same tools plus `get_context`/`search_knowledge`/`get_knowledge`/`get_source`, served in-process by the same service the MCP server uses. The order of the two conditions alternates per task. Prompt caching is enabled identically in both conditions (top-level automatic `cache_control`).
