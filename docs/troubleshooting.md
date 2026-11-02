@@ -12,7 +12,7 @@
 | Results are irrelevant or empty | Use the repository's own vocabulary (identifiers, file names). Add `categories`/`path_prefix`. Read `notes`/`gaps`: they list terms that matched nothing. Fall back to grep; knock doesn't replace reading code. |
 | Knowledge looks outdated after a big refactor | `knock index --full` re-extracts everything (ids of unchanged items are kept). |
 | `database schema vN is newer than this knock build` | Upgrade knock, or point `KNOCK_HOME` at a fresh directory. |
-| MCP client shows no tools | Run the configured command manually (`knock serve --repo .`). Errors go to stderr. Make sure the client launches the command from a virtualenv where `knock` is installed (use an absolute path). |
+| MCP client shows no tools | Run the configured command manually (`knock serve --repo .`). Errors go to stderr. With `uvx knock-mcp`, make sure `uvx` is on the client's `PATH` (or use its absolute path, from `which uvx`). With a virtualenv install, use the absolute path to its `knock`. |
 | `pytest` crashes at start-up with `'NodeId' object has no attribute '_str_cache'` | pytest 9.2 failed on Python 3.10.0 in our environment. The `dev` extra pins `pytest<9`. |
 
 ## Known failure modes

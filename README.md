@@ -6,15 +6,17 @@
 
 *Stop paying your agent to re-read the same files every session. Knock first, then read only what matters.*
 
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/knock-mcp.svg)](https://pypi.org/project/knock-mcp/)
+[![tests](https://github.com/HasanGilani/knock/actions/workflows/tests.yml/badge.svg)](https://github.com/HasanGilani/knock/actions/workflows/tests.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/HasanGilani/knock/blob/main/LICENSE)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![MCP server](https://img.shields.io/badge/MCP-server-8A2BE2)
 ![100% local](https://img.shields.io/badge/runs-100%25%20local-2ea44f)
 ![No API key needed](https://img.shields.io/badge/API%20key-not%20needed-2ea44f)
 
-<img src="assets/demo.svg" alt="Side by side: the same investigation in Saleor (4,776 files). Claude Code alone: a sub-agent makes 30 tool calls, 3 min 22 s of model time, $0.49. Claude Code with knock: 13 tool calls, 1 min 16 s, $0.25. Both answers correct." width="100%">
+<img src="https://raw.githubusercontent.com/HasanGilani/knock/main/assets/demo.svg" alt="Side by side: the same investigation in Saleor (4,776 files). Claude Code alone: a sub-agent makes 30 tool calls, 3 min 22 s of model time, $0.49. Claude Code with knock: 13 tool calls, 1 min 16 s, $0.25. Both answers correct." width="100%">
 
-<sub>Two real Claude Code sessions on <a href="https://github.com/saleor/saleor">Saleor</a>, abridged: each side's median-cost run out of three. Results vary between runs and repositories; on a small, well-known repo the difference was within noise. Full numbers: <a href="docs/benchmark.md">docs/benchmark.md</a>.</sub>
+<sub>Two real Claude Code sessions on <a href="https://github.com/saleor/saleor">Saleor</a>, abridged: each side's median-cost run out of three. Results vary between runs and repositories; on a small, well-known repo the difference was within noise. Full numbers: <a href="https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md">docs/benchmark.md</a>.</sub>
 
 </div>
 
@@ -32,31 +34,25 @@ Every new chat with a coding agent starts with amnesia. To answer *"where is X?"
 | **Remembers yesterday's bug hunt** | ❌ | ✅ agents save findings with `remember` |
 | **Knows when its notes are outdated** | — | ✅ every answer says `fresh` or `stale` |
 
-<sub>Median characters per task on the <a href="docs/benchmark.md">held-out benchmark</a> (targeted-grep and grep-and-read baselines vs knock). Fewer characters ≠ an identical cut in your bill; see the <a href="#-faq">FAQ</a>.</sub>
+<sub>Median characters per task on the <a href="https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md">held-out benchmark</a> (targeted-grep and grep-and-read baselines vs knock). Fewer characters ≠ an identical cut in your bill; see the <a href="#-faq">FAQ</a>.</sub>
 
 ## ⚡ Getting started
 
 **You set knock up once, then you just keep using your AI agent as usual.** The agent talks to knock in the background; you never have to run knock commands day to day.
 
-### 1️⃣ Install knock (once)
+### 1️⃣ Connect it to Claude Code (once per project)
+
+From inside the project you work on:
 
 ```bash
-git clone https://github.com/HasanGilani/knock.git && cd knock
-python3 -m venv .venv && source .venv/bin/activate && pip install -e .
+claude mcp add knock -- uvx knock-mcp serve --repo . --toolset map
 ```
 
-### 2️⃣ Connect it to your agent (once per project)
-
-From inside the project you work on, for **Claude Code** (in the same terminal as step 1, so `which knock` finds it):
-
-```bash
-cd ~/code/my-project
-claude mcp add knock -- "$(which knock)" serve --repo . --toolset map
-```
+This uses [uv](https://docs.astral.sh/uv/getting-started/installation/), which downloads and runs knock for you. No uv? Run `pipx install knock-mcp` (or `pip install knock-mcp`), then `claude mcp add knock -- knock serve --repo . --toolset map`.
 
 `--toolset map` gives the agent three tools (`map`, `open`, `remember`) and is the setup measured in the results below. Leave it out to get the original eight tools.
 
-That's the whole setup. The next time you open Claude Code in that project, knock reads the project and builds its notes automatically. This takes a few seconds the first time; after that it only re-reads files that changed.
+That's the whole setup. The next time you open Claude Code in that project, knock reads the project and builds its notes automatically. This takes a few seconds for a small project and a minute or two for about 5,000 files; after that it only re-reads files that changed.
 
 > [!TIP]
 > Add this line to your project's `CLAUDE.md` so the agent uses knock when it pays off:
@@ -64,7 +60,7 @@ That's the whole setup. The next time you open Claude Code in that project, knoc
 >
 > In our recordings, knock saved money on investigations in a large codebase but added a small cost to quick edits, so this line matters.
 
-### 3️⃣ Work normally
+### 2️⃣ Work normally
 
 Ask your agent what you'd always ask. Here's what changes behind the scenes:
 
@@ -209,11 +205,11 @@ Measured with a reproducible benchmark: 12 engineering tasks per repo, covering 
   - **Flask** (small and well known): knock was break-even on a bug investigation and slightly *more* expensive on an easy edit, where its extra steps outweigh a single search.
   - **Saleor** (4,776 files, released days before the test), with the compact `map` toolset: on a multi-module investigation, knock cut the median cost from **$0.49 to $0.29** and model time from 170 s to 78 s, and every knock run was cheaper. On a follow-up edit whose file one regex search found, knock cost more ($0.14 vs $0.08).
   - **Latest version** (adds edit mode and "skip knock for easy edits" guidance), over the full investigate-then-edit scenario: Saleor's median two-day cost fell from **$0.70 to $0.43 (−39%)**. On Flask it was $0.31 vs $0.27, within run-to-run noise. Claude followed the guidance: it used knock for every investigation and skipped it for all the Flask edits.
-  - Details and caveats are in [docs/benchmark.md](docs/benchmark.md#large-repository-saleor-real-claude-code-sessions).
+  - Details and caveats are in [docs/benchmark.md](https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md#large-repository-saleor-real-claude-code-sessions).
 - **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.
 - **Where knock missed:** wording mismatches ("linters" vs "lint") and module-level variables it doesn't index yet.
 
-Full methodology: [docs/benchmark.md](docs/benchmark.md).
+Full methodology: [docs/benchmark.md](https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md).
 
 </details>
 
@@ -225,7 +221,7 @@ Full methodology: [docs/benchmark.md](docs/benchmark.md).
 - 🚧 **Sandboxed reads:** agents can only fetch files knock indexed, never `../../anything`.
 
 > [!IMPORTANT]
-> Whatever your agent retrieves through knock goes into the agent's context, just as if it had read the file itself. Exclude anything sensitive with a `.knockignore` file. Details: [docs/security.md](docs/security.md).
+> Whatever your agent retrieves through knock goes into the agent's context, just as if it had read the file itself. Exclude anything sensitive with a `.knockignore` file. Details: [docs/security.md](https://github.com/HasanGilani/knock/blob/main/docs/security.md).
 
 ## ❓ FAQ
 
@@ -244,13 +240,13 @@ No. Indexing and search are fully deterministic and local. The only thing that u
 <details>
 <summary><b>Which agents work with it?</b></summary>
 
-Any agent that supports MCP over stdio. Verified: **Claude Code** (the session at the top of this page is a real recording of Claude using knock's tools) and the official MCP Python SDK client (all 8 tools, in the test suite). Cursor, Windsurf and others should work but are untested. Setup: [docs/agents.md](docs/agents.md).
+Any agent that supports MCP over stdio. Verified: **Claude Code** (the session at the top of this page is a real recording of Claude using knock's tools) and the official MCP Python SDK client (all 8 tools, in the test suite). Cursor, Windsurf and others should work but are untested. Setup: [docs/agents.md](https://github.com/HasanGilani/knock/blob/main/docs/agents.md).
 </details>
 
 <details>
 <summary><b>Which languages and files does it understand?</b></summary>
 
-Python (deeply, via its syntax tree), plus JavaScript/TypeScript, Go, Rust, Java, Kotlin, C#, Ruby, PHP, Swift, C/C++ and more. It also reads Markdown and reStructuredText docs, ADRs, `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, Dockerfiles, Makefiles, GitHub Actions, linter configs and git history. Full list: [docs/architecture.md](docs/architecture.md#supported-files).
+Python (deeply, via its syntax tree), plus JavaScript/TypeScript, Go, Rust, Java, Kotlin, C#, Ruby, PHP, Swift, C/C++ and more. It also reads Markdown and reStructuredText docs, ADRs, `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, Dockerfiles, Makefiles, GitHub Actions, linter configs and git history. Full list: [docs/architecture.md](https://github.com/HasanGilani/knock/blob/main/docs/architecture.md#supported-files).
 </details>
 
 <details>
@@ -282,14 +278,14 @@ knock is an early **MVP** (v0.1). What works today and what's next:
 
 ## 🤝 Contributing
 
-Issues and PRs are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
+Issues and PRs are welcome. Start with [CONTRIBUTING.md](https://github.com/HasanGilani/knock/blob/main/CONTRIBUTING.md).
 
 ```bash
 .venv/bin/pip install -e '.[dev]' && .venv/bin/pytest
 ```
 
-Deeper docs: [Architecture](docs/architecture.md) · [Security](docs/security.md) · [Agents](docs/agents.md) · [Benchmark](docs/benchmark.md) · [Troubleshooting](docs/troubleshooting.md)
+Deeper docs: [Architecture](https://github.com/HasanGilani/knock/blob/main/docs/architecture.md) · [Security](https://github.com/HasanGilani/knock/blob/main/docs/security.md) · [Agents](https://github.com/HasanGilani/knock/blob/main/docs/agents.md) · [Benchmark](https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md) · [Troubleshooting](https://github.com/HasanGilani/knock/blob/main/docs/troubleshooting.md)
 
 ## 📜 License
 
-[Apache-2.0](LICENSE)
+[Apache-2.0](https://github.com/HasanGilani/knock/blob/main/LICENSE)

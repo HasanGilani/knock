@@ -24,15 +24,17 @@ knock serve --repo /path/to/repo [--repo /path/to/other] [--no-refresh]
 From the repository you want to work on:
 
 ```bash
-claude mcp add knock -- /absolute/path/to/knock/.venv/bin/knock serve --repo . --toolset map
+claude mcp add knock -- uvx knock-mcp serve --repo . --toolset map
 ```
 
-Or commit a project-scoped `.mcp.json` (each user needs `knock` on their `PATH`):
+This needs [uv](https://docs.astral.sh/uv/getting-started/installation/). With knock installed instead (`pipx install knock-mcp`), use `claude mcp add knock -- knock serve --repo . --toolset map`.
+
+Or commit a project-scoped `.mcp.json` so everyone on the team gets it (each user needs uv):
 
 ```json
 {
   "mcpServers": {
-    "knock": { "command": "knock", "args": ["serve", "--repo", "."] }
+    "knock": { "command": "uvx", "args": ["knock-mcp", "serve", "--repo", ".", "--toolset", "map"] }
   }
 }
 ```
@@ -55,8 +57,8 @@ Most clients accept the same shape:
 {
   "mcpServers": {
     "knock": {
-      "command": "/absolute/path/to/knock/.venv/bin/knock",
-      "args": ["serve", "--repo", "/absolute/path/to/repo"]
+      "command": "uvx",
+      "args": ["knock-mcp", "serve", "--repo", "/absolute/path/to/repo"]
     }
   }
 }
