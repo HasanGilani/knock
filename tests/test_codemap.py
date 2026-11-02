@@ -158,3 +158,32 @@ def test_edit_mode_map_gives_read_range_and_local_patterns(make_repo, service):
     assert "Docs & config" not in text
     question = service.code_map("How are abandoned carts purged?", repository=rid)
     assert "change request" not in question and "To edit" not in question
+
+
+def test_map_during_first_index_waits_then_says_so(make_repo, service, monkeypatch):
+    """A map request that arrives while the startup index is still running must not answer from an empty index."""
+    import os
+    import threading
+
+    root = make_repo()
+    rid = service.register(str(root))["id"]
+    service.conn.execute("INSERT INTO index_runs (repo_id, mode, status, pid, started_at, heartbeat_at) "
+                         "VALUES (?, 'full', 'running', ?, datetime('now'), datetime('now'))", (rid, os.getpid()))
+    service.conn.commit()
+    monkeypatch.setattr(KnockService, "FIRST_INDEX_WAIT_SECONDS", 0.3)
+    out = service.code_map("where are orders created?", repository=rid)
+    assert "first index still running" in out and "No matching code" not in out
+
+    # When the first index finishes during the wait, the request gets the real map.
+    monkeypatch.setattr(KnockService, "FIRST_INDEX_WAIT_SECONDS", 10.0)
+
+    def finish():
+        bg = KnockService(service.config)
+        bg.conn.execute("UPDATE index_runs SET status='completed' WHERE repo_id=?", (rid,))
+        bg.conn.commit()
+        bg.refresh_repository(rid)
+        bg.close()
+
+    threading.Timer(0.3, finish).start()
+    out = service.code_map("where are orders created?", repository=rid)
+    assert "first index still running" not in out and "create_order" in out

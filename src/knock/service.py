@@ -618,6 +618,20 @@ class KnockService:
             return repo, "fresh"
         return repo, f"{f['state']} ({f['files_modified_since_index']} files changed since indexing; verify line numbers)"
 
+    FIRST_INDEX_WAIT_SECONDS = 25.0
+
+    def _await_first_index(self, repo: Repo) -> Repo:
+        """The server indexes a new repository in the background at startup. A map request that arrives
+        before that first index finishes waits for it briefly instead of answering from an empty index."""
+        deadline = time.monotonic() + self.FIRST_INDEX_WAIT_SECONDS
+        while repo.last_indexed_at is None and time.monotonic() < deadline:
+            run = self.conn.execute("SELECT status FROM index_runs WHERE repo_id=? ORDER BY id DESC LIMIT 1", (repo.id,)).fetchone()
+            if not run or run["status"] != "running":
+                break
+            time.sleep(0.25)
+            repo = self.resolve(repo.id)
+        return repo
+
     def code_map(self, task: str, repository: str | None = None, max_chars: int | None = None) -> str:
         from .codemap import CodeMap, is_change_request
 
@@ -626,6 +640,12 @@ class KnockService:
         task = clean_text(task or "", 1000)
         if not task:
             raise KnockError("task must not be empty")
+        repo = self._await_first_index(repo)
+        if repo.last_indexed_at is None and self._freshness(repo)["state"] == "indexing":
+            done = self.conn.execute("SELECT COUNT(*) FROM files WHERE repo_id=?", (repo.id,)).fetchone()[0]
+            return (f"knock map · {repo.name} · first index still running ({done} files read so far)\n\n"
+                    "knock is reading this repository for the first time (a minute or two for 5,000 files). "
+                    "Explore with your usual tools for now, and call map again shortly.")
         repo, fresh = self._ensure_fresh(repo)
         knowledge, _diag = search(self.conn, repo.id, task, limit=8)
         cm = CodeMap(self.conn, repo.id)
