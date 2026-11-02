@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.HasanGilani/knock",
+  "title": "knock",
+  "description": "Code map and memory for AI coding agents: key functions, line ranges, callers, why code changed.",
+  "repository": {
+    "url": "https://github.com/HasanGilani/knock",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/HasanGilani/knock",
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "knock-mcp",
+      "version": "0.1.1",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        { "type": "positional", "value": "serve" },
+        { "type": "named", "name": "--repo", "value": ".", "description": "Repository to serve; '.' is the project the agent runs in." },
+        { "type": "named", "name": "--toolset", "value": "map", "description": "'map' gives three tools (map, open, remember); omit for the original eight." }
+      ]
+    }
+  ]
+}
