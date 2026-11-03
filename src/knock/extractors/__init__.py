@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-EXTRACTOR_VERSION = 6
+EXTRACTOR_VERSION = 7
 
 CATEGORIES = (
     "architecture",

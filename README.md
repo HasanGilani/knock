@@ -251,7 +251,7 @@ Any agent that supports MCP over stdio. Verified: **Claude Code** (the session a
 <details>
 <summary><b>Which languages and files does it understand?</b></summary>
 
-Python (deeply, via its syntax tree), plus JavaScript/TypeScript, Go, Rust, Java, Kotlin, C#, Ruby, PHP, Swift, C/C++ and more. It also reads Markdown and reStructuredText docs, ADRs, `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, Dockerfiles, Makefiles, GitHub Actions, linter configs and git history. Full list: [docs/architecture.md](https://github.com/HasanGilani/knock/blob/main/docs/architecture.md#supported-files).
+Python and JavaScript/TypeScript (including JSX, React components, Vue and Svelte scripts) get the full map: line ranges, what each function calls and uses, and who calls it. Go, Rust, Java, Kotlin, C#, Ruby, PHP, Swift, C/C++ and more get their functions, classes and types. It also reads Markdown and reStructuredText docs, ADRs, `package.json`, `pyproject.toml`, `go.mod`, `Cargo.toml`, Dockerfiles, Makefiles, GitHub Actions, linter configs and git history. Full list: [docs/architecture.md](https://github.com/HasanGilani/knock/blob/main/docs/architecture.md#supported-files).
 </details>
 
 <details>

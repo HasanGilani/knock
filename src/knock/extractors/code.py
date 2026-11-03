@@ -12,7 +12,7 @@ import re
 from pathlib import PurePosixPath
 
 from ..util import first_sentences
-from . import Candidate, FileExtraction, Symbol
+from . import Candidate, FileExtraction, Symbol, js
 
 MAX_SYMBOLS_LISTED = 24
 _TEST_HINT = re.compile(r"(^|/)(tests?|__tests__|spec|specs)(/|$)|(^|/)test_[^/]*$|_test\.[a-z]+$|\.(test|spec)\.[a-z]+$")
@@ -29,6 +29,11 @@ def extract(path: str, text: str, language: str) -> FileExtraction:
         try:
             result = _python(path, text)
         except (SyntaxError, ValueError, RecursionError):
+            result = _regex(path, text, language)
+    elif language in _JS_LANGUAGES:
+        try:
+            result = _javascript(path, text, language)
+        except Exception:  # the scanner must never break indexing: fall back to line patterns
             result = _regex(path, text, language)
     else:
         result = _regex(path, text, language)
@@ -177,6 +182,26 @@ def _is_main_guard(test: ast.expr) -> bool:
         and test.left.id == "__name__"
         and any(isinstance(c, ast.Constant) and c.value == "__main__" for c in test.comparators)
     )
+
+
+# ------------------------------------------------------------ javascript
+_JS_LANGUAGES = ("javascript", "typescript", "vue", "svelte")
+
+
+def _javascript(path: str, text: str, language: str) -> FileExtraction:
+    out = js.extract(path, text, language)
+    out.doc = _leading_comment(text) if language not in ("vue", "svelte") else ""
+    # Routes registered inside functions (registerRoutes(app) { app.get(…) }) are not top-level statements.
+    have = {s.name for s in out.symbols if s.kind == "route"}
+    for lineno, line in enumerate(text.splitlines(), 1):
+        comment = line.lstrip().startswith(("//", "*", "/*"))   # JSDoc examples are not routes
+        m = _JS_ROUTE.search(line) if len(line) <= 400 and not comment else None
+        if m and m.group(2).startswith("/"):
+            name = f"{m.group(1).upper()} {m.group(2)}"
+            name = name.replace("ALL ", "ROUTE ").replace("USE ", "ROUTE ")
+            if name not in have:
+                out.symbols.append(Symbol(name, "route", lineno, line.strip()[:160]))
+    return out
 
 
 # ---------------------------------------------------------------- other langs

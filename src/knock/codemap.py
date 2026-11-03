@@ -48,6 +48,9 @@ SEED_POOL = 2000   # FTS candidates scored per task; large repositories need a w
 SEED_LIMIT = 60
 
 
+_CALLABLE = frozenset(("function", "method", "class", "route", "test", "entrypoint"))
+
+
 def code_identifiers(text: str) -> list[str]:
     """Words in free text that look like code: snake_case, CamelCase, CONSTANTS, dotted names."""
     out: dict[str, None] = {}
@@ -402,7 +405,8 @@ class CodeMap:
         if n_tests:
             callers.append(f"{n_tests} test{'s' if n_tests != 1 else ''}")
         if callers:
-            detail = (detail or f"{indent}   ") + f" · called by {', '.join(callers)}"
+            verb = "called by" if s.kind in _CALLABLE else "used by"
+            detail = (detail or f"{indent}   ") + f" · {verb} {', '.join(callers)}"
         if detail:
             out.append(detail)
         return out

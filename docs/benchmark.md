@@ -214,6 +214,32 @@ Three runs per side is a small sample, and identical agent runs can differ a lot
 - **Not a win every time:** the cheapest run without knock ($0.22) cost less than the median with knock. One pair of runs can flatter either side, which is why these are medians.
 - **Model time:** the gap is smaller than the first batch suggested (1.7× pooled, not 2.5×).
 
+## JavaScript/TypeScript code map (v0.2, deterministic check, 2026-11-03)
+
+Until v0.2, only Python got a full map. JavaScript/TypeScript symbols came from line patterns: a name and a start line, with no line range and no record of what a function calls. v0.2 adds a tokenizer-based extractor (`src/knock/extractors/js.py`). It was checked on two open-source repositories that knock was not developed on: [Hono](https://github.com/honojs/hono) v4.13.14 (a TypeScript server framework, 431 JS/TS files) and [Excalidraw](https://github.com/excalidraw/excalidraw) v0.18.1 (a React/TSX app, 540 files).
+
+**Coverage.** The new extractor handled 968 of 971 files. The other 3 (an SVG logo component and two embedded WebAssembly blobs) are treated as generated code and fall back to line patterns, as intended. Of the top-level declarations the old line patterns found in non-test files, the new extractor misses one, in Hono: a declaration inside a template string, i.e. code that generates code. (Checking this found and fixed a bug: `declare module "*.scss";` with no body used to swallow the next declaration.)
+
+**Maps.** Eight questions with answers checked against the source, one `map` call each, old line patterns vs v0.2:
+
+| Question | Expected in the map | old | v0.2 |
+|---|---|:---:|:---:|
+| Hono: how is a request path matched to a handler, which router is the default? | `SmartRouter`, `RegExpRouter` | 0/2 | 0/2 |
+| Hono: where are CORS headers set, how is the allowed origin decided? | `cors` | 1/1 | 1/1 |
+| Hono: what happens when a JWT is expired, where is it verified? | `verify`, `JwtTokenExpired` | 1/2 | 2/2 |
+| Hono: how does `c.json()` build the response? | `json`, `newResponse` | 1/2 | 2/2 |
+| Excalidraw: how is the scene exported to PNG? | `exportToCanvas` | 0/1 | 1/1 |
+| Excalidraw: where is undo implemented? | `undo`, `History` | 2/2 | 2/2 |
+| Excalidraw: what happens when an image is pasted? | `pasteFromClipboard`, `insertImageElement` | 0/2 | 2/2 |
+| Excalidraw: how are elements resized from a handle? | `transformElements`, `resizeSingleElement` | 1/2 | 1/2 |
+| **Total** | | **6/14** | **11/14** |
+
+v0.2 maps also show line ranges (12.5 per map on average, vs 1.8) and "called by" links (8.8 per map, vs none; types and constants get "used by" on top). Indexing took 1.9 s (Hono) and 2.9 s (Excalidraw), against 1.3 s and 2.2 s with line patterns.
+
+- **The remaining misses are ranking, not extraction.** In the router question, "route" and "match" occur all over Hono, so route helpers outrank the core router. Both answers are in the index.
+- **No regression on the retrieval benchmark.** Flask (12/12 and 9/12) and full-stack-fastapi-template (11/12 and 9/12) pass the same tasks as before. The template's React frontend now carries call information, so its median `map` answer grew from 2,302 to 2,495 characters.
+- **Not yet measured:** real Claude Code sessions on a TypeScript repository, like the Saleor recordings above. These questions were written for this check, which makes it a development set.
+
 ## Model-in-the-loop benchmark (`agent_bench.py`)
 
 This benchmark uses the same model, the same system prompt, the same 20-turn limit and the same starting state. The **baseline** gets `list_files`/`grep`/`read_file`. The **knock** condition gets the same tools plus `get_context`/`search_knowledge`/`get_knowledge`/`get_source`, served in-process by the same service the MCP server uses. The order of the two conditions alternates per task. Prompt caching is enabled identically in both conditions (top-level automatic `cache_control`).
