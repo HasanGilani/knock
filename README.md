@@ -3,23 +3,26 @@
 
 # 🚪 knock
 
-### Give your AI coding agent a memory of your codebase.
+### Stop Claude Code from burning your usage limit on big repos.
 
-*Stop paying your agent to re-read the same files every session. Knock first, then read only what matters.*
+On a large codebase, Claude Code spends much of each session searching and reading files, often through a sub-agent, before it answers you. knock gives it a map of the code up front: the functions that matter, their exact line ranges, and who calls what. It runs on your machine and needs no API key.
+
+**Same question, 8 runs each, on a 4,776-file repo: median cost $0.42 → $0.25 (−40%).**<br>**Without knock, Claude spawned a sub-agent in 5 of 8 runs. With knock, in none.**
+
+```bash
+claude mcp add knock -- uvx knock-mcp serve --repo . --toolset map
+```
+
+<sub>Full code map for Python and JavaScript/TypeScript; functions and classes for Go, Rust, Java and more.</sub>
 
 [![PyPI](https://img.shields.io/pypi/v/knock-mcp.svg)](https://pypi.org/project/knock-mcp/)
 [![tests](https://github.com/HasanGilani/knock/actions/workflows/tests.yml/badge.svg)](https://github.com/HasanGilani/knock/actions/workflows/tests.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](https://github.com/HasanGilani/knock/blob/main/LICENSE)
-![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
-![MCP server](https://img.shields.io/badge/MCP-server-8A2BE2)
 ![100% local](https://img.shields.io/badge/runs-100%25%20local-2ea44f)
-![No API key needed](https://img.shields.io/badge/API%20key-not%20needed-2ea44f)
 
 <img src="https://raw.githubusercontent.com/HasanGilani/knock/main/assets/demo.svg" alt="Side by side: the same investigation in Saleor (4,776 files). Claude Code alone: a sub-agent makes 30 tool calls, 3 min 22 s of model time, $0.49. Claude Code with knock: 13 tool calls, 1 min 16 s, $0.25. Both answers correct." width="100%">
 
-<sub>Two real Claude Code sessions on <a href="https://github.com/saleor/saleor">Saleor</a>, abridged: each side's median-cost run out of three. Results vary between runs and repositories; on a small, well-known repo the difference was within noise. Full numbers: <a href="https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md">docs/benchmark.md</a>.</sub>
-
-📝 **The story behind the numbers: [I recorded 87 Claude Code sessions to find out where the money goes](https://dev.to/hasangilani/i-recorded-87-claude-code-sessions-to-find-out-where-the-money-goes-2i2k)**
+<sub>Two real Claude Code sessions on <a href="https://github.com/saleor/saleor">Saleor</a>, abridged: each side's median-cost run out of three. Results vary between runs and repositories; on a small, well-known repo the difference was within noise. Full numbers: <a href="https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md">docs/benchmark.md</a> · how it was measured: <a href="https://dev.to/hasangilani/i-recorded-87-claude-code-sessions-to-find-out-where-the-money-goes-2i2k">the write-up</a>.</sub>
 
 </div>
 
@@ -209,7 +212,7 @@ Measured with a reproducible benchmark: 12 engineering tasks per repo, covering 
   - **Saleor** (4,776 files, released days before the test), with the compact `map` toolset: on a multi-module investigation, knock cut the median cost from **$0.49 to $0.29** and model time from 170 s to 78 s, and every knock run was cheaper. On a follow-up edit whose file one regex search found, knock cost more ($0.14 vs $0.08).
   - **Latest version** (adds edit mode and "skip knock for easy edits" guidance), over the full investigate-then-edit scenario: Saleor's median two-day cost fell from **$0.70 to $0.43 (−39%)**. On Flask it was $0.31 vs $0.27, within run-to-run noise. Claude followed the guidance: it used knock for every investigation and skipped it for all the Flask edits.
   - **Variance check** (8 runs per side on the Saleor investigation): median cost **$0.42 → $0.25 (−40%)**, 8/8 correct answers on both sides, and about half the spread. Without knock, Claude delegated to a sub-agent in 5 of 8 runs; with knock, in none.
-  - The full story, including the versions that lost: [I recorded 87 Claude Code sessions…](https://dev.to/hasangilani/i-recorded-87-claude-code-sessions-to-find-out-where-the-money-goes-2i2k).
+  - The full story, including the versions that lost: [Stop Claude Code from burning your usage limit on big repos](https://dev.to/hasangilani/i-recorded-87-claude-code-sessions-to-find-out-where-the-money-goes-2i2k).
   - Details and caveats are in [docs/benchmark.md](https://github.com/HasanGilani/knock/blob/main/docs/benchmark.md#large-repository-saleor-real-claude-code-sessions).
 - **Not yet measured:** real billed tokens with a live model. The harness is ready (`benchmarks/agent_bench.py`) but costs API credits to run.
 - **Where knock missed:** wording mismatches ("linters" vs "lint") and module-level variables it doesn't index yet.
@@ -268,7 +271,7 @@ No embeddings and no vector database. knock stores **small structured facts that
 
 ## 🗺️ Status
 
-knock is an early **MVP** (v0.1). What works today and what's next:
+knock is early (v0.2). What works today and what's next:
 
 - [x] Incremental, resumable indexing that respects `.gitignore` and skips secrets
 - [x] Structured knowledge with sources, freshness and lifecycle
@@ -276,6 +279,7 @@ knock is an early **MVP** (v0.1). What works today and what's next:
 - [x] Reproducible benchmark with a held-out repo
 - [ ] Model-in-the-loop token and cost benchmark (harness ready)
 - [x] Compact 3-tool "code map" (`--toolset map`), measured in real Claude Code sessions on Flask and Saleor
+- [x] Full code map for JavaScript and TypeScript (v0.2)
 - [ ] Measure on more large repositories, and on private codebases
 - [ ] Smarter matching for synonyms, and indexing module-level variables
 - [ ] Optional AI-assisted extraction (opt-in, disclosed)
